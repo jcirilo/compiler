@@ -47,10 +47,26 @@ public class Scanner {
 					state = 3;
 				} else if (isComment(currentChar)) {
 					state = 5;
+				} else if(isOperator(currentChar)){
+					content += currentChar;
+					state = 6;
+				} else if(isAssignment(currentChar)){
+					content += currentChar;
+					state = 7;				
+				} else if(isRelOperator(currentChar)){
+					content += currentChar;
+					state = 8;
+				} else if(isLeftParen(currentChar)){
+					content += currentChar;
+					return new Token(TokenType.LEFT_PAREN, content);
+				} else if(isRightParen(currentChar)){
+					content += currentChar;
+					return new Token(TokenType.RIGHT_PAREN, content);
 				} else {
 					throw new RuntimeException("Invalid character: " + currentChar);
 				}
 				break;
+
 			case 1:
 				if(Character.isLetter(currentChar) || Character.isDigit(currentChar)) {
 					content += currentChar;
@@ -59,6 +75,7 @@ public class Scanner {
 					state = 2;
 				}
 				break;
+
 			case 2:
 				back();
 				return new Token(TokenType.IDENTIFIER, content);
@@ -77,13 +94,34 @@ public class Scanner {
 			case 4:
 				back();
 				return new Token(TokenType.NUMBER, content);
+
 			case 5:
-				System.out.print(currentChar);
+				//System.out.print(currentChar);
 				if (isEndOfLine(currentChar)) {
-					System.out.println();
+					//System.out.println();
 					state = 0;
 				}
 				break;
+
+			case 6:
+				return new Token(TokenType.MATH_OPERATOR, content);
+
+			case 7:
+				if(currentChar == '='){
+					content += currentChar;
+					return new Token(TokenType.REL_OPERATOR, content);
+				}else{
+					back();
+					return new Token(TokenType.ASSIGNMENT, content);
+				}
+
+			case 8: 
+				if((content.equals(">") || content.equals("<") || content.equals("=") || content.equals("!")) && currentChar == '='){
+					content += currentChar;
+				} else{
+					back();
+				}
+				return new Token(TokenType.REL_OPERATOR, content);
 			default:
 				break;
 			}
@@ -108,9 +146,24 @@ public class Scanner {
 		return c == ' ' || c == '\n' || c == '\t' || c == '\r';
 	}
 	
-	private boolean isOperator(char c) {
-		return c=='=' || c == '>' || c == '<' || c == '!' || c == '+' || c == '-' ||
-				c == '*' || c == '/';
+	private boolean isOperator(char c) {                       // operadores matemáticos
+		return c == '+' || c == '-' || c == '*' || c == '/';
+	}
+
+	private boolean isAssignment(char c){                      // operador de atribuição
+		return c == '=';
+	}
+
+	private boolean isRelOperator(char c){                     // início dos operadores relacionais 
+		return c == '>' || c == '<' || c == '!' || c == '=';
+	}
+
+	private boolean isLeftParen(char c){                       // parênteses
+		return c == '(';
+	}
+
+	private boolean isRightParen(char c){
+		return c == ')';
 	}
 	
 	private char nextChar() {
@@ -130,8 +183,3 @@ public class Scanner {
 	
 
 }
-
-
-
-
-
