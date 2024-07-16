@@ -1,4 +1,9 @@
-#%42[]as<>comentario +[==]
+# %42[]as<>comentario +[==]
+
+_variavel
+_variavel1
+variavel_2
+variavel_
 
 x soma y
  soma2
