@@ -45,7 +45,7 @@ public class Scanner {
 				} else if (Character.isDigit(currentChar)) {
 					content += currentChar;
 					state = 3;
-				} else if (isComment(currentChar)) {
+				} else if (currentChar == '#') {
 					state = 5;
 				} else if(isOperator(currentChar)){
 					content += currentChar;
@@ -94,13 +94,13 @@ public class Scanner {
 			case 4:
 				back();
 				return new Token(TokenType.NUMBER, content);
-
+			
+			// ignora comentários
 			case 5:
-				//System.out.print(currentChar);
-				if (isEndOfLine(currentChar)) {
-					//System.out.println();
-					state = 0;
+				while (!isEndOfLine(currentChar)) {
+					currentChar = nextChar();
 				}
+				state = 0;
 				break;
 
 			case 6:
@@ -130,12 +130,8 @@ public class Scanner {
 		
 	}
 
-	private boolean isComment(char c) {
-		return c == '#';
-	}
-
 	private boolean isEndOfLine(char c) {
-		return c == '\n';
+		return (c == '\n' || c == '\r');
 	}
 
 	private boolean isLetter(char c) {
