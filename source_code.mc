@@ -10,4 +10,8 @@ x soma y
 
 soma >= 2 <= 5 != 0 == 2
 
+int teste1
+float reservada3
+print palavra_reservada
+
 ( nome )
