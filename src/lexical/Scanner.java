@@ -50,7 +50,7 @@ public class Scanner {
 				case 0:
 					if (isSpace(currentChar)) {
 						state = 0;
-					} else if (Character.isLetter(currentChar)) {
+					} else if (Character.isLetter(currentChar) || isUnderscore(currentChar)) {
 						content += currentChar;
 						state = 1;
 					} else if (Character.isDigit(currentChar)) {
@@ -79,7 +79,7 @@ public class Scanner {
 					break;
 
 				case 1:
-					if (Character.isLetter(currentChar) || Character.isDigit(currentChar)) {
+					if (Character.isLetter(currentChar) || Character.isDigit(currentChar) || isUnderscore(currentChar)) {
 						content += currentChar;
 						state = 1;
 					} else {
@@ -141,6 +141,10 @@ public class Scanner {
 			}
 		}
 		
+	}
+
+	private boolean isUnderscore (char c) {
+		return c == '_';
 	}
 
 	private boolean isEndOfLine(char c) {
