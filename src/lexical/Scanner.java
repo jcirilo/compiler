@@ -56,7 +56,7 @@ public class Scanner {
 					} else if (Character.isDigit(currentChar)) {
 						content += currentChar;
 						state = 3;
-					} else if (isComment(currentChar)) {
+					} else if (currentChar == '#') {
 						state = 5;
 					} else if (isOperator(currentChar)) {
 						content += currentChar;
@@ -140,14 +140,11 @@ public class Scanner {
 					break;
 			}
 		}
-	}
-
-	private boolean isComment(char c) {
-		return c == '#';
+		
 	}
 
 	private boolean isEndOfLine(char c) {
-		return c == '\n';
+		return (c == '\n' || c == '\r');
 	}
 
 	private boolean isLetter(char c) {
