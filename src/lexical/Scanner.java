@@ -154,6 +154,8 @@ public class Scanner {
 						state = 10;
 					} else if (isOperator(currentChar) || isSpace(currentChar)) {
 						state = 4;
+					} else {
+						throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
 					break;
 				default:
