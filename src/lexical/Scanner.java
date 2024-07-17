@@ -56,7 +56,7 @@ public class Scanner {
 					} else if (Character.isDigit(currentChar)) {
 						content += currentChar;
 						state = 3;
-					} else if (currentChar == '#') {
+					} else if (isHashtag(currentChar)) {
 						state = 5;
 					} else if (isOperator(currentChar)) {
 						content += currentChar;
@@ -111,9 +111,10 @@ public class Scanner {
 					return new Token(TokenType.NUMBER, content);
 
 				case 5:
-					if (isEndOfLine(currentChar)) {
-						state = 0;
+					while (!isEndOfLine(currentChar)) {
+						currentChar = nextChar();
 					}
+					state = 0;
 					break;
 
 				case 6:
@@ -147,8 +148,12 @@ public class Scanner {
 		return c == '_';
 	}
 
+	private boolean isHashtag (char c) {
+		return c == '#';
+	}
+
 	private boolean isEndOfLine(char c) {
-		return (c == '\n' || c == '\r');
+		return (c == '\n') || (c == '\r');
 	}
 
 	private boolean isLetter(char c) {
