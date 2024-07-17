@@ -101,6 +101,9 @@ public class Scanner {
 						state = 3;
 					} else if (isOperator(currentChar) || isSpace(currentChar)) {
 						state = 4;
+					} else if(isPoint(currentChar)) {
+						content += currentChar;
+						state = 9;
 					} else {
 						throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
@@ -137,11 +140,31 @@ public class Scanner {
 					}
 					return new Token(TokenType.REL_OPERATOR, content);
 
+				case 9:
+					if (Character.isDigit(currentChar)) {
+						content += currentChar;
+						state = 10;
+					} else {
+						throw new RuntimeException("Malformed number: " + content + currentChar);
+					}
+					break;
+				case 10:
+					if (Character.isDigit(currentChar)) {
+						content += currentChar;
+						state = 10;
+					} else if (isOperator(currentChar) || isSpace(currentChar)) {
+						state = 4;
+					}
+					break;
 				default:
 					break;
 			}
 		}
 		
+	}
+
+	private boolean isPoint(char c) {
+		return c == '.';
 	}
 
 	private boolean isUnderscore (char c) {
