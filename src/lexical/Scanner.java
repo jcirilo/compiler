@@ -56,10 +56,10 @@ public class Scanner {
 				case 0:
 					if (isSpace(currentChar)) {
 						state = 0;
-					} else if (Character.isLetter(currentChar) || isUnderscore(currentChar)) {
+					} else if (isLetter(currentChar) || isUnderscore(currentChar)) {
 						content += currentChar;
 						state = 1;
-					} else if (Character.isDigit(currentChar)) {
+					} else if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 3;
 					} else if (isHashtag(currentChar)) {
@@ -85,7 +85,7 @@ public class Scanner {
 					break;
 
 				case 1:
-					if (Character.isLetter(currentChar) || Character.isDigit(currentChar) || isUnderscore(currentChar)) {
+					if (isLetter(currentChar) || isDigit(currentChar) || isUnderscore(currentChar)) {
 						content += currentChar;
 						state = 1;
 					} else if (reservedWords.containsKey(content) && isSpace(currentChar)) {
@@ -98,13 +98,13 @@ public class Scanner {
 					break;
 
 				case 3:
-					if (Character.isDigit(currentChar)) {
+					if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 3;
 					} else if (isPoint(currentChar)) {
 						content += currentChar;
 						state = 9;
-					} else if (Character.isLetter(currentChar)) {
+					} else if (isLetter(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					}else {
 						back();
@@ -138,7 +138,7 @@ public class Scanner {
 					}
 
 				case 9:
-					if (Character.isDigit(currentChar)) {
+					if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 10;
 					} else {
@@ -147,10 +147,10 @@ public class Scanner {
 					break;
 
 				case 10:
-					if (Character.isDigit(currentChar)) {
+					if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 10;
-					} else if (Character.isLetter(currentChar)) {
+					} else if (isLetter(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					} else {
 						back();
@@ -181,7 +181,11 @@ public class Scanner {
 	}
 
 	private boolean isLetter(char c) {
-		return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+		return Character.isLetter(c);
+	}
+
+	private boolean isDigit(char c) {
+		return Character.isDigit(c);
 	}
 
 	private boolean isSpace(char c) {
