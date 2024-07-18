@@ -16,7 +16,7 @@ public class Scanner {
 
 	public Scanner(String source) {
 		pos = 0;
-		row = 0;
+		row = 1;
 		col = 0;
 		initializeReservedWords();
 		try {
@@ -73,13 +73,18 @@ public class Scanner {
 					} else if (isRightParen(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.RIGHT_PAREN, content);
+					} else if(isInvalidCharacter(currentChar)){
+						error("Invalid character: " + currentChar);
 					} else {
-						throw new RuntimeException("Invalid character: " + currentChar);
+						throw new RuntimeException("Unexpected character: " + currentChar);
 					}
 					break;
 
 				case 1:
 					if (Character.isLetter(currentChar) || Character.isDigit(currentChar) || isUnderscore(currentChar)) {
+						if(isInvalidCharacter(currentChar)){
+							error("Invalid character: " + currentChar);
+						}
 						content += currentChar;
 						state = 1;
 					} else {
@@ -105,7 +110,8 @@ public class Scanner {
 						content += currentChar;
 						state = 9;
 					} else {
-						throw new RuntimeException("Malformed number: " + content + currentChar);
+						error("Malformed number: " + content + currentChar);
+						//throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
 					break;
 
@@ -144,7 +150,8 @@ public class Scanner {
 						content += currentChar;
 						state = 10;
 					} else {
-						throw new RuntimeException("Malformed number: " + content + currentChar);
+						error("Malformed number: " + content + currentChar);
+						//throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
 					break;
 				case 10:
@@ -154,7 +161,8 @@ public class Scanner {
 					} else if (isOperator(currentChar) || isSpace(currentChar)) {
 						state = 4;
 					} else {
-						throw new RuntimeException("Malformed number: " + content + currentChar);
+						error("Malformed number: " + content + currentChar);
+						//throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
 					break;
 				
@@ -220,12 +228,44 @@ public class Scanner {
 		return c == ')';
 	}
 
+	private boolean isInvalidCharacter(char c){
+		return c == 'ç' || c == '@' || c == '`' || c == '´' || c == '~' || c == '¨' ||
+		c == 'á' ||c == 'à' || c == 'ã' || c == 'õ' || 
+		c == 'â' || c == 'ê' || c == 'ô';
+
+	}
+
 	private char nextChar() {
-		return sourceBuffer[pos++];
+		//return sourceBuffer[pos++];
+		char currentChar = sourceBuffer[pos++];
+		if(currentChar == '\n'){
+			row++;
+			col = 0;
+		}else{
+			col++;
+		}
+		return currentChar;
 	}
 
 	private void back() {
 		pos--;
+		if(pos >= 0){
+			char currentChar = sourceBuffer[pos];
+
+			if(currentChar == '\n'){
+				row--;
+				col = 1;
+				for(int i = pos - 1; i >= 0 && sourceBuffer[i] != '\n'; i--){
+					col++;
+				}
+			} else{
+				col--;
+			}
+		}
+	}
+
+	private void error(String message){
+		throw new RuntimeException("Error on line " + row + " and collumn " + col + " - " + message);	
 	}
 
 	private boolean isEOF() {
