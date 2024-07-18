@@ -22,6 +22,14 @@
 
 ![Math Operator Automata](/static/math_operator_automata.png)
 
+### 1.1.3. Assignment Operator Automata
+
+![Assignment Operator Automata](/static/assignment_automata.png)
+
+### 1.1.4. Relational Operator Automata
+
+![Relational Operator Automata](/static/relational_automata.png)
+
 #### 1.1.6. Integer and Floating Numbers Automata
 
 ![Integer and Floating Numbers Automata](/static/integer_and_floating_numbers_automata.png)
