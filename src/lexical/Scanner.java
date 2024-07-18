@@ -61,18 +61,18 @@ public class Scanner {
 						state = 1;
 					} else if (isDigit(currentChar)) {
 						content += currentChar;
-						state = 3;
+						state = 2;
 					} else if (isHashtag(currentChar)) {
-						state = 5;
+						state = 3;
 					} else if (isOperator(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.MATH_OPERATOR, content);
 					} else if (isAssignment(currentChar)) {
 						content += currentChar;
-						state = 7;
+						state = 4;
 					} else if (isRelOperator(currentChar)) {
 						content += currentChar;
-						state = 8;
+						state = 5;
 					} else if (isLeftParen(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.LEFT_PAREN, content);
@@ -97,13 +97,13 @@ public class Scanner {
 					}
 					break;
 
-				case 3:
+				case 2:
 					if (isDigit(currentChar)) {
 						content += currentChar;
-						state = 3;
+						state = 2;
 					} else if (isPoint(currentChar)) {
 						content += currentChar;
-						state = 9;
+						state = 6;
 					} else if (isLetter(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					}else {
@@ -112,14 +112,14 @@ public class Scanner {
 					}
 					break;
 
-				case 5:
+				case 3:
 					while (!isEndOfLine(currentChar)) {
 						currentChar = nextChar();
 					}
 					state = 0;
 					break;
 
-				case 7:
+				case 4:
 					if (isAssignment(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.REL_OPERATOR, content);
@@ -128,7 +128,7 @@ public class Scanner {
 						return new Token(TokenType.ASSIGNMENT, content);
 					}
 
-				case 8:
+				case 5:
 					if (isAssignment(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.REL_OPERATOR, content);
@@ -137,19 +137,19 @@ public class Scanner {
 						return new Token(TokenType.REL_OPERATOR, content);
 					}
 
-				case 9:
+				case 6:
 					if (isDigit(currentChar)) {
 						content += currentChar;
-						state = 10;
+						state = 7;
 					} else {
 						error("Malformed number: " + content + currentChar);
 					}
 					break;
 
-				case 10:
+				case 7:
 					if (isDigit(currentChar)) {
 						content += currentChar;
-						state = 10;
+						state = 7;
 					} else if (isLetter(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					} else {
