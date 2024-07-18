@@ -124,22 +124,21 @@ public class Scanner {
 					return new Token(TokenType.MATH_OPERATOR, content);
 
 				case 7:
-					if (currentChar == '=') {
+					if (isAssignment(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.REL_OPERATOR, content);
+						state = 12;
 					} else {
-						back();
-						return new Token(TokenType.ASSIGNMENT, content);
+						state = 11;
 					}
-
+					break;
 				case 8:
-					if ((content.equals(">") || content.equals("<") || content.equals("=") || content.equals("!")) && currentChar == '=') {
+					if (isAssignment(currentChar)) {
 						content += currentChar;
+						state = 12;
 					} else {
-						back();
+						state = 13;
 					}
-					return new Token(TokenType.REL_OPERATOR, content);
-
+					break;
 				case 9:
 					if (Character.isDigit(currentChar)) {
 						content += currentChar;
@@ -158,6 +157,18 @@ public class Scanner {
 						throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
 					break;
+				
+				case 11:
+					back();
+					return new Token(TokenType.ASSIGNMENT, content);
+				
+				case 12:
+					return new Token(TokenType.REL_OPERATOR, content);
+
+				case 13:
+					back();
+					return new Token(TokenType.REL_OPERATOR, content);
+
 				default:
 					break;
 			}
@@ -198,7 +209,7 @@ public class Scanner {
 	}
 
 	private boolean isRelOperator(char c) {
-		return c == '>' || c == '<' || c == '!' || c == '=';
+		return c == '>' || c == '<' || c == '!';
 	}
 
 	private boolean isLeftParen(char c) {
