@@ -20,7 +20,7 @@ public class Scanner {
 		col = 0;
 		initializeReservedWords();
 		try {
-			String buffer = new String(Files.readAllBytes(Paths.get(source)));
+			String buffer = new String(Files.readAllBytes(Paths.get(source))).concat("\n");
 			sourceBuffer = buffer.toCharArray();
 		} catch (IOException e) {
 			e.printStackTrace();
