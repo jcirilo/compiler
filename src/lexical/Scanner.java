@@ -41,10 +41,16 @@ public class Scanner {
 		char currentChar;
 		String content = "";
 		while (true) {
+
 			if (isEOF()) {
 				return null;
 			}
+
 			currentChar = nextChar();
+
+			if (isInvalidCharacter(currentChar)) {
+				error("Invalid character: " + content + currentChar);	
+			}
 
 			switch (state) {
 				case 0:
@@ -60,7 +66,7 @@ public class Scanner {
 						state = 5;
 					} else if (isOperator(currentChar)) {
 						content += currentChar;
-						state = 6;
+						return new Token(TokenType.MATH_OPERATOR, content);
 					} else if (isAssignment(currentChar)) {
 						content += currentChar;
 						state = 7;
@@ -73,51 +79,38 @@ public class Scanner {
 					} else if (isRightParen(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.RIGHT_PAREN, content);
-					} else if(isInvalidCharacter(currentChar)){
-						error("Invalid character: " + currentChar);
 					} else {
-						throw new RuntimeException("Unexpected character: " + currentChar);
+						error("Unexpected character: " + currentChar);
 					}
 					break;
 
 				case 1:
 					if (Character.isLetter(currentChar) || Character.isDigit(currentChar) || isUnderscore(currentChar)) {
-						if(isInvalidCharacter(currentChar)){
-							error("Invalid character: " + currentChar);
-						}
 						content += currentChar;
 						state = 1;
-					} else {
-						state = 2;
-					}
-					break;
-
-				case 2:
-					back();
-					if (reservedWords.containsKey(content)) {
+					} else if (reservedWords.containsKey(content) && isSpace(currentChar)) {
+						back();
 						return new Token(reservedWords.get(content), content);
 					} else {
+						back();
 						return new Token(TokenType.IDENTIFIER, content);
 					}
+					break;
 
 				case 3:
 					if (Character.isDigit(currentChar)) {
 						content += currentChar;
 						state = 3;
-					} else if (isOperator(currentChar) || isSpace(currentChar)) {
-						state = 4;
-					} else if(isPoint(currentChar)) {
+					} else if (isPoint(currentChar)) {
 						content += currentChar;
 						state = 9;
-					} else {
+					} else if (Character.isLetter(currentChar)) {
 						error("Malformed number: " + content + currentChar);
-						//throw new RuntimeException("Malformed number: " + content + currentChar);
+					}else {
+						back();
+						return new Token(TokenType.NUMBER, content);
 					}
 					break;
-
-				case 4:
-					back();
-					return new Token(TokenType.NUMBER, content);
 
 				case 5:
 					while (!isEndOfLine(currentChar)) {
@@ -126,62 +119,49 @@ public class Scanner {
 					state = 0;
 					break;
 
-				case 6:
-					return new Token(TokenType.MATH_OPERATOR, content);
-
 				case 7:
 					if (isAssignment(currentChar)) {
 						content += currentChar;
-						state = 12;
+						return new Token(TokenType.REL_OPERATOR, content);
 					} else {
-						state = 11;
+						back();
+						return new Token(TokenType.ASSIGNMENT, content);
 					}
-					break;
+
 				case 8:
 					if (isAssignment(currentChar)) {
 						content += currentChar;
-						state = 12;
+						return new Token(TokenType.REL_OPERATOR, content);
 					} else {
-						state = 13;
+						back();
+						return new Token(TokenType.REL_OPERATOR, content);
 					}
-					break;
+
 				case 9:
 					if (Character.isDigit(currentChar)) {
 						content += currentChar;
 						state = 10;
 					} else {
 						error("Malformed number: " + content + currentChar);
-						//throw new RuntimeException("Malformed number: " + content + currentChar);
 					}
 					break;
+
 				case 10:
 					if (Character.isDigit(currentChar)) {
 						content += currentChar;
 						state = 10;
-					} else if (isOperator(currentChar) || isSpace(currentChar)) {
-						state = 4;
-					} else {
+					} else if (Character.isLetter(currentChar)) {
 						error("Malformed number: " + content + currentChar);
-						//throw new RuntimeException("Malformed number: " + content + currentChar);
+					} else {
+						back();
+						return new Token(TokenType.NUMBER, content);
 					}
 					break;
-				
-				case 11:
-					back();
-					return new Token(TokenType.ASSIGNMENT, content);
-				
-				case 12:
-					return new Token(TokenType.REL_OPERATOR, content);
-
-				case 13:
-					back();
-					return new Token(TokenType.REL_OPERATOR, content);
 
 				default:
 					break;
 			}
 		}
-		
 	}
 
 	private boolean isPoint(char c) {
@@ -236,7 +216,6 @@ public class Scanner {
 	}
 
 	private char nextChar() {
-		//return sourceBuffer[pos++];
 		char currentChar = sourceBuffer[pos++];
 		if(currentChar == '\n'){
 			row++;
@@ -265,7 +244,7 @@ public class Scanner {
 	}
 
 	private void error(String message){
-		throw new RuntimeException("Error on line " + row + " and collumn " + col + " - " + message);	
+		throw new RuntimeException("Error on line " + row + " and column " + col + " - " + message);	
 	}
 
 	private boolean isEOF() {
