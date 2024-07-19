@@ -88,7 +88,7 @@ public class Scanner {
 					if (isLetter(currentChar) || isDigit(currentChar) || isUnderscore(currentChar)) {
 						content += currentChar;
 						state = 1;
-					} else if (reservedWords.containsKey(content) && isSpace(currentChar)) {
+					} else if (reservedWords.containsKey(content)) {
 						back();
 						return new Token(reservedWords.get(content), content);
 					} else {
