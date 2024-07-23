@@ -104,7 +104,7 @@ public class Scanner {
 					} else if (isPoint(currentChar)) {
 						content += currentChar;
 						state = 6;
-					} else if (isLetter(currentChar)) {
+					} else if (isLetter(currentChar) || isUnderscore(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					}else {
 						back();
@@ -150,7 +150,7 @@ public class Scanner {
 					if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 7;
-					} else if (isLetter(currentChar)) {
+					} else if (isLetter(currentChar) || isUnderscore(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					} else {
 						back();
