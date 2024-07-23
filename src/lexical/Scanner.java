@@ -62,6 +62,9 @@ public class Scanner {
 					} else if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 2;
+					} else if (isPoint(currentChar)) { 
+						content+= currentChar;
+						state = 7;
 					} else if (isHashtag(currentChar)) {
 						state = 3;
 					} else if (isOperator(currentChar)) {
@@ -150,7 +153,7 @@ public class Scanner {
 					if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 7;
-					} else if (isLetter(currentChar) || isUnderscore(currentChar)) {
+					} else if (isLetter(currentChar) || isUnderscore(currentChar) || isPoint(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					} else {
 						back();
