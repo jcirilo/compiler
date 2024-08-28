@@ -29,11 +29,22 @@ public class Scanner {
 
 	private void initializeReservedWords() {
 		reservedWords = new HashMap<>();
-		reservedWords.put("int", TokenType.RESERVED);
-		reservedWords.put("float", TokenType.RESERVED);
-		reservedWords.put("print", TokenType.RESERVED);
-		reservedWords.put("if", TokenType.RESERVED);
-		reservedWords.put("else", TokenType.RESERVED);
+		reservedWords.put("integer", TokenType.RESERVED);
+		reservedWords.put("real", TokenType.RESERVED);
+		reservedWords.put("program", TokenType.RESERVED);
+		reservedWords.put("var", TokenType.RESERVED);
+		reservedWords.put("boolean", TokenType.RESERVED);
+		reservedWords.put("procedure", TokenType.RESERVED);
+        reservedWords.put("begin", TokenType.RESERVED);
+        reservedWords.put("end", TokenType.RESERVED);
+        reservedWords.put("if", TokenType.RESERVED);
+        reservedWords.put("then", TokenType.RESERVED);
+        reservedWords.put("else", TokenType.RESERVED);
+        reservedWords.put("while", TokenType.RESERVED);
+        reservedWords.put("do", TokenType.RESERVED);
+        reservedWords.put("not", TokenType.RESERVED);
+		reservedWords.put("or", TokenType.ADD_OPERATOR);
+		reservedWords.put("and", TokenType.MULT_OPERATOR);
 	}
 
 	public Token nextToken() {
@@ -62,26 +73,32 @@ public class Scanner {
 					} else if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 2;
-					} else if (isPoint(currentChar)) { 
+					} else if (isDot(currentChar)) { 
 						content+= currentChar;
-						state = 7;
+						return new Token(TokenType.DELIMITER, content);
 					} else if (isHashtag(currentChar)) {
 						state = 3;
-					} else if (isOperator(currentChar)) {
+					} else if (isAddOperator(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.MATH_OPERATOR, content);
-					} else if (isAssignment(currentChar)) {
+						return new Token(TokenType.ADD_OPERATOR, content);
+					} else if (isMultOperator(currentChar)) {
+						content += currentChar;
+						return new Token(TokenType.MULT_OPERATOR, content);
+					} else if (isTwoDots(currentChar)) {
 						content += currentChar;
 						state = 4;
-					} else if (isRelOperator(currentChar)) {
+					} else if (isEquals(currentChar)) {
+						content += currentChar;
+						return new Token(TokenType.REL_OPERATOR, content);
+					} else if (isLessThan(currentChar)) {
 						content += currentChar;
 						state = 5;
-					} else if (isLeftParen(currentChar)) {
+					} else if (isGreaterThan(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.LEFT_PAREN, content);
-					} else if (isRightParen(currentChar)) {
+						state = 7;
+					} else if (isDelimiter(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.RIGHT_PAREN, content);
+						return new Token(TokenType.DELIMITER, content);
 					} else {
 						error("Unexpected character: " + currentChar);
 					}
@@ -104,14 +121,14 @@ public class Scanner {
 					if (isDigit(currentChar)) {
 						content += currentChar;
 						state = 2;
-					} else if (isPoint(currentChar)) {
+					} else if (isDot(currentChar)) {
 						content += currentChar;
 						state = 6;
 					} else if (isLetter(currentChar) || isUnderscore(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					}else {
 						back();
-						return new Token(TokenType.NUMBER, content);
+						return new Token(TokenType.INT_NUMBER, content);
 					}
 					break;
 
@@ -123,16 +140,15 @@ public class Scanner {
 					break;
 
 				case 4:
-					if (isAssignment(currentChar)) {
+					if (isEquals(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.REL_OPERATOR, content);
+						return new Token(TokenType.ASSIGNMENT, content);
 					} else {
 						back();
-						return new Token(TokenType.ASSIGNMENT, content);
+						return new Token(TokenType.DELIMITER, content);
 					}
-
 				case 5:
-					if (isAssignment(currentChar)) {
+					if (isEquals(currentChar) || isGreaterThan(currentChar)) {
 						content += currentChar;
 						return new Token(TokenType.REL_OPERATOR, content);
 					} else {
@@ -143,31 +159,29 @@ public class Scanner {
 				case 6:
 					if (isDigit(currentChar)) {
 						content += currentChar;
-						state = 7;
-					} else {
-						error("Malformed number: " + content + currentChar);
-					}
-					break;
-
-				case 7:
-					if (isDigit(currentChar)) {
-						content += currentChar;
-						state = 7;
-					} else if (isLetter(currentChar) || isUnderscore(currentChar) || isPoint(currentChar)) {
+						state = 6;
+					} else if (isLetter(currentChar) || isUnderscore(currentChar) || isDot(currentChar)) {
 						error("Malformed number: " + content + currentChar);
 					} else {
 						back();
-						return new Token(TokenType.NUMBER, content);
+						return new Token(TokenType.REAL_NUMBER, content);
 					}
 					break;
-
+				case 7:
+					if (isEquals(currentChar)) {
+						content += currentChar;
+						return new Token(TokenType.REL_OPERATOR, content);
+					} else {
+						back();
+						return new Token(TokenType.REL_OPERATOR, content);
+					}
 				default:
 					break;
 			}
 		}
 	}
 
-	private boolean isPoint(char c) {
+	private boolean isDot(char c) {
 		return c == '.';
 	}
 
@@ -195,24 +209,32 @@ public class Scanner {
 		return c == ' ' || c == '\n' || c == '\t' || c == '\r';
 	}
 
-	private boolean isOperator(char c) {
-		return c == '+' || c == '-' || c == '*' || c == '/';
+	private boolean isAddOperator(char c) {
+		return c == '+' || c == '-';
 	}
 
-	private boolean isAssignment(char c) {
+	private boolean isMultOperator(char c) {
+		return c == '*' || c == '/';
+	}
+
+	private boolean isDelimiter(char c) {
+		return c == ';' || c == '(' || c==')' || c == ',';
+	}
+
+	private boolean isTwoDots(char c) {
+		return c == ':';
+	}
+
+	private boolean isEquals(char c) {
 		return c == '=';
 	}
 
-	private boolean isRelOperator(char c) {
-		return c == '>' || c == '<' || c == '!';
+	private boolean isLessThan(char c) {
+		return c == '<';
 	}
 
-	private boolean isLeftParen(char c) {
-		return c == '(';
-	}
-
-	private boolean isRightParen(char c) {
-		return c == ')';
+	private boolean isGreaterThan(char c) {
+		return c == '>';
 	}
 
 	private boolean isInvalidCharacter(char c){
