@@ -1,20 +1,22 @@
 package main;
 
-import lexical.Scanner;
+import java.util.ArrayList;
+
+import lexical.Lexical;
 import lexical.Token;
+import parser.Parser;
 
 public class Main {
 
 	public static void main(String[] args) {
-		Scanner sc = new Scanner("source_code.mc");
-		Token tk;
-		while(true) {
-			tk = sc.nextToken();
-			if(tk == null) {
-				break;
-			}
-			System.out.println(tk);
-		}
+		Lexical lexicalAnalyzer = new Lexical();
+		Parser parserAnalyzer = new Parser();
+		ArrayList<Token> buffer;
+		
+		buffer = lexicalAnalyzer.tokenizer("source_code.mc");
+		parserAnalyzer.setBuffer(buffer);
+		parserAnalyzer.start();
+
 		System.out.println("Compilation Successful");
 
 	}
