@@ -15,7 +15,7 @@ public class Main {
 		
 		buffer = lexicalAnalyzer.tokenizer("source_code.mc");
 		parserAnalyzer.setBuffer(buffer);
-		parserAnalyzer.start();
+		parserAnalyzer.parse();
 
 		System.out.println("Compilation Successful");
 
