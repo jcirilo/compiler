@@ -4,6 +4,12 @@ lista_declaracoes_variaveis
 
 L -> LI:T; | I:T;
 
+lista_declarações_variáveis →
+     lista_de_identificadores: tipo; lista_declarações_variáveis2
+
+lista_declarações_variáveis2 →
+    lista_de_identificadores: tipo; lista_declarações_variáveis2 | ε
+
 L -> I:T;L'
 L'-> I:T;L' | epslon
 
@@ -12,6 +18,12 @@ lista_de_identificadores
 --------------------------------------------------------------
 
 I -> I,id | id
+
+lista_de_identificadores →
+    id lista_de_identificadores2
+
+lista_de_identificadores2 →
+    , id lista_de_identificadores | ε
 
 I -> idI'
 I'-> ,idI' | epslon
@@ -22,6 +34,13 @@ declaracoes_subprogramas
 
 D -> DS; | epslon
 
+
+declarações_de_subprogramas →
+    ε declarações_de_subprogramas2
+
+declarações_de_subprogramas2 →
+    declaração_de_subprograma ; declarações_de_subprogramas2 | ε
+
 D -> epslonD'
 D'-> S;D' | epslon
 
@@ -30,6 +49,12 @@ lista_de_parametros
 --------------------------------------------------------------
 
 P -> I:T | P;I:T
+
+lista_de_parametros →
+    lista_de_identificadores : tipo lista_de_parametros2
+
+lista_de_parametros2 →
+    ; lista_de_identificadores : lista_de_parametros2 | ε
 
 P -> I:TP'
 P'-> ;I:TP' | epslon
@@ -40,6 +65,12 @@ lista_de_comandos
 
 L -> C | L;C
 
+lista_de_comandos →
+    comando lista_de_comandos2
+
+lista_de_comandos →
+    ; comando lista_de_comandos2 | ε
+
 L -> CL'
 L'-> ;CL' | epslon
 
@@ -48,6 +79,13 @@ lista_de_expressoes
 --------------------------------------------------------------
 
 L -> E | L,E
+
+
+lista_de_expressões →
+    expressão lista_de_expressões2
+
+lista_de_expressões2 →
+    , expressão lista_de_expressões2 | ε
 
 L -> EL'
 L'-> ,EL' | epslon

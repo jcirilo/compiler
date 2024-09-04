@@ -8,13 +8,18 @@ programa →
 declarações_variáveis →
     var lista_declarações_variáveis
     | ε
-    lista_declarações_variáveis →
-    lista_declarações_variáveis lista_de_identificadores: tipo;
-    | lista_de_identificadores: tipo;
+
+lista_declarações_variáveis →
+     lista_de_identificadores: tipo; lista_declarações_variáveis2
+
+lista_declarações_variáveis2 →
+    lista_de_identificadores: tipo; lista_declarações_variáveis2 | ε
 
 lista_de_identificadores →
-    id
-    | lista_de_identificadores, id
+    id lista_de_identificadores2
+
+lista_de_identificadores2 →
+    , id lista_de_identificadores | ε
 
 tipo →
     integer
@@ -22,8 +27,10 @@ tipo →
     | boolean
 
 declarações_de_subprogramas →
-    declarações_de_subprogramas declaração_de_subprograma;
-    | ε
+    ε declarações_de_subprogramas2
+
+declarações_de_subprogramas2 →
+    declaração_de_subprograma ; declarações_de_subprogramas2 | ε
 
 declaração_de_subprograma →
     procedure id argumentos;
@@ -36,8 +43,10 @@ argumentos →
     | ε
 
 lista_de_parametros →
-    lista_de_identificadores: tipo
-    | lista_de_parametros; lista_de_identificadores: tipo
+    lista_de_identificadores : tipo lista_de_parametros2
+
+lista_de_parametros2 →
+    ; lista_de_identificadores : lista_de_parametros2 | ε
 
 comando_composto →
     begin
@@ -49,8 +58,10 @@ comandos_opcionais →
     | ε
 
 lista_de_comandos →
-    comando
-    | lista_de_comandos; comando
+    comando lista_de_comandos2
+
+lista_de_comandos2 →
+    ; comando lista_de_comandos2 | ε
 
 comando →
     variável := expressão
@@ -71,21 +82,27 @@ ativação_de_procedimento →
     | id (lista_de_expressões)
 
 lista_de_expressões →
-    expressão
-    | lista_de_expressões, expressão
+    expressão lista_de_expressões2
+
+lista_de_expressões2 →
+    , expressão lista_de_expressões2 | ε
 
 expressão →
     expressão_simples
     | expressão_simples op_relacional expressão_simples
 
 expressão_simples →
-    termo
-    | sinal termo
-    | expressão_simples op_aditivo termo
+	termo expressão_simples2 
+	| sinal termo
 
-termo →
-    fator
-    | termo op_multiplicativo fator
+expressão_simples2 →
+	op_aditivo termo expressão_simples2 | ε
+
+termo → 
+	fator termo2
+
+termo2 → 
+	op_multiplicativo fator termo2 | ε
 
 fator →
     id
