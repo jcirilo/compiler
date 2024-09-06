@@ -1,6 +1,7 @@
 package parser;
 
 import utils.TokenType;
+import static utils.TokenType.*;
 import java.util.ArrayList;
 import lexical.Token;
 
@@ -8,32 +9,34 @@ public class Parser {
     ArrayList<Token> buffer;
     private int pos;
     private Token currentToken;
-    private String tktxt;   // para debug
-    private String tktp;    // para debug
+    private String text; // debug
+    private String type; // debug
+
     public Parser() {
-        this.buffer = null;
         this.pos = 0;
+        this.buffer = null;
         this.currentToken = null;
-        this.tktxt = null;
-        this.tktp = null;
+        this.text = null;
+        this.type = null;
     }
 
-    public void setBuffer(ArrayList<Token> buffer) {
+    public void parse(ArrayList<Token> buffer) {
         this.buffer = buffer;
-    }
-
-    public void parse() {
+        if (this.buffer == null) {
+            throw new RuntimeException("Syntatic Error: buffer is empty!");
+        }
         programa();
+        System.out.println("Syntatic compilation sucessfully");
     }
 
     private void goNext() {
         if (pos < buffer.size()) {
             currentToken = buffer.get(pos++);
-            tktxt = currentToken.getText();
-            tktp = currentToken.getType().name();
+            text = currentToken.getText();
+            type = currentToken.getType().name();
         }
     }
-    
+
     private boolean isCurrentTokenType(TokenType t) {
         return currentToken.getType() == t;
     }
@@ -42,24 +45,27 @@ public class Parser {
         return currentToken.getText().equals(s);
     }
 
-    private boolean error() {
-        throw new RuntimeException("Erro Sintatico " + currentToken.getText());
+    private void error() {
+        throw new RuntimeException(
+            "Syntatic Error: unespected token '" 
+            + currentToken.getText()  
+            + "' at line " 
+            + currentToken.getRow() 
+            + ", column " 
+            + currentToken.getCol());
     }
 
     private void programa() {
         goNext();
         if (isCurrentTokenText("program")) {
             goNext();
-            if (isCurrentTokenType(TokenType.IDENTIFIER)) {
+            if (isCurrentTokenType(IDENTIFIER)) {
                 goNext();
                 if (isCurrentTokenText(";")) {
+                    goNext();
                     declaracoes_variaveis();
                     declaracoes_de_subprogramas();
                     comando_composto();
-                    goNext();
-                    if (!isCurrentTokenText(".")) {
-                        error();
-                    }
                 } else {
                     error();
                 }
@@ -72,19 +78,26 @@ public class Parser {
     }
 
     private void declaracoes_variaveis() {
-        goNext();
         if (isCurrentTokenText("var")) {
+            goNext();
             lista_declaracoes_variaveis();
         }
     }
 
     private void lista_declaracoes_variaveis() {
-        lista_de_identificadores();
-        if (isCurrentTokenText(":")) {
-            tipo();
-            goNext();
-            if (isCurrentTokenText(";")) {
-                lista_declaracoes_variaveis2();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            lista_de_identificadores();
+            //goNext();
+            if (isCurrentTokenText(":")) {
+                goNext();
+                tipo();
+                goNext();
+                if (isCurrentTokenText(";")) {
+                    goNext();
+                    lista_declaracoes_variaveis2();
+                } else {
+                    error();
+                }
             } else {
                 error();
             }
@@ -94,38 +107,37 @@ public class Parser {
     }
 
     private void lista_declaracoes_variaveis2() {
-        goNext();
-        if (isCurrentTokenText(",")) {
-            goNext();
-            if (isCurrentTokenType(TokenType.IDENTIFIER)) {
-                lista_declaracoes_variaveis2();
-            } else {
-                error();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            lista_de_identificadores();
+            //goNext();
+            if (isCurrentTokenText(":")) {
+                goNext();
+                tipo();
+                goNext();
+                if (isCurrentTokenText(";")) {
+                    lista_declaracoes_variaveis2();
+                } else {
+                    error();
+                }
             }
         }
     }
 
-    private void tipo() {
-        goNext();
-        if (!isCurrentTokenText("integer") && 
-            !isCurrentTokenText("real") && 
-            !isCurrentTokenText("boolean")) {
+    private void lista_de_identificadores() {
+        //goNext();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            goNext();
+            lista_de_identificadores2();
+        } else {
             error();
         }
     }
 
-    private void lista_de_identificadores() {
-        goNext();
-        if (isCurrentTokenType(TokenType.IDENTIFIER)) {
-            lista_de_identificadores2();
-        }
-    }
-
     private void lista_de_identificadores2() {
-        goNext();
         if (isCurrentTokenText(",")) {
             goNext();
-            if (isCurrentTokenType(TokenType.IDENTIFIER)) {
+            if (isCurrentTokenType(IDENTIFIER)) {
+                goNext();
                 lista_de_identificadores2();
             } else {
                 error();
@@ -133,24 +145,40 @@ public class Parser {
         }
     }
 
+    private void tipo() {
+        if (isCurrentTokenText("integer")) {
+        } else if (isCurrentTokenText("real")) {
+        } else if (isCurrentTokenText("boolean")) {
+        } else {
+            error();
+        }
+    }
+
     private void declaracoes_de_subprogramas() {
+        //goNext();
         if (isCurrentTokenText("procedure")) {
             declaracoes_de_subprogramas2();
         }
     }
 
     private void declaracoes_de_subprogramas2() {
-        declaracao_de_subprograma();
         goNext();
-        if (isCurrentTokenText(";")) {
-            declaracoes_de_subprogramas2();
+        if (isCurrentTokenText("procedure")) {
+            declaracao_de_subprograma();
+            goNext();
+            if (isCurrentTokenText(";")) {
+                declaracoes_de_subprogramas2();
+            } else {
+                error();
+            }
         }
     }
 
     private void declaracao_de_subprograma() {
+        goNext();
         if (isCurrentTokenText("procedure")) {
             goNext();
-            if (isCurrentTokenType(TokenType.IDENTIFIER)) {
+            if (isCurrentTokenType(IDENTIFIER)) {
                 argumentos();
                 goNext();
                 if (isCurrentTokenText(";")) {
@@ -172,17 +200,18 @@ public class Parser {
         goNext();
         if (isCurrentTokenText("(")) {
             lista_de_parametros();
-            if (!isCurrentTokenText(")")) {
-                error();
-            }
         }
     }
 
     private void lista_de_parametros() {
-        lista_de_identificadores();
-        if (isCurrentTokenText(":")) {
-            tipo();
-            lista_de_parametros2();
+        goNext();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            lista_de_identificadores();
+            goNext();
+            if (isCurrentTokenText(":")) {
+                tipo();
+                lista_de_parametros2();
+            }
         } else {
             error();
         }
@@ -203,51 +232,63 @@ public class Parser {
     }
 
     private void comando_composto() {
+        //goNext();
         if (isCurrentTokenText("begin")) {
             comandos_opcionais();
             goNext();
-            if (!isCurrentTokenText("end")) {
+            if (isCurrentTokenText("end")) {
+                // error se nao terminar com end
+            } else {
                 error();
             }
+        } else {
+            error();
         }
     }
 
     private void comandos_opcionais() {
-        lista_de_comandos();        
+        goNext();
+        if (isCurrentTokenType(IDENTIFIER)
+            || isCurrentTokenText("begin")
+            || isCurrentTokenText("if")
+            || isCurrentTokenText("while")
+        ) {
+            lista_de_comandos();
+        }
     }
 
     private void lista_de_comandos() {
-        comando();
-        lista_de_comandos2();
+        //goNext();
+        if (isCurrentTokenType(IDENTIFIER)
+            || isCurrentTokenText("begin")
+            || isCurrentTokenText("if")
+            || isCurrentTokenText("while")
+        ) {
+            comando();
+            lista_de_comandos2();
+        } else {
+            error();
+        }
     }
 
     private void lista_de_comandos2() {
-        goNext();
+        //goNext();
         if (isCurrentTokenText(";")) {
             comando();
             lista_de_comandos2();
         }
     }
 
-    // TODO: FALTA TERMINAR DAQUI PARA BAIXO 
     private void comando() {
-
-        if (isCurrentTokenType(TokenType.IDENTIFIER)) {
-            goNext();
-            // variavel
-            if (isCurrentTokenText(":=")) {
-                expressao();
-
-            // ativacao_de_procedimento
-            } else if (isCurrentTokenText("(")) {
-                lista_de_expressoes();
-            } else {
-                error();
-            }
+        //goNext();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            comando_opt();
+        } else if (isCurrentTokenText("begin")) {
+            comando_composto();
         } else if (isCurrentTokenText("if")) {
             expressao();
             goNext();
-            if (isCurrentTokenText("then")) {
+            if(isCurrentTokenText("then")) {
                 comando();
                 parte_else();
             } else {
@@ -261,12 +302,26 @@ public class Parser {
             } else {
                 error();
             }
-        } else if (isCurrentTokenText("begin")) {
-            comando_composto();
         } else {
             error();
         }
     }
+
+    private void comando_opt() {
+        goNext();
+        if (isCurrentTokenText(":=")) {
+            expressao();
+        } else if (isCurrentTokenText("(")) {
+            lista_de_expressoes();
+            goNext();
+            if (isCurrentTokenText(")")) {
+                // fim lista expressoes
+            } else {
+                error();
+            }
+        }
+    }
+
     private void parte_else() {
         goNext();
         if (isCurrentTokenText("else")) {
@@ -275,74 +330,140 @@ public class Parser {
     }
 
     private void lista_de_expressoes() {
-        expressao();
-        lista_de_expressoes2();
+        if (isCurrentTokenType(IDENTIFIER)
+            || isCurrentTokenType(INT_NUMBER)
+            || isCurrentTokenType(INT_NUMBER)
+            || isCurrentTokenType(REAL_NUMBER)
+            || isCurrentTokenText("true")
+            || isCurrentTokenText("(")
+            || isCurrentTokenText("not")
+            || isCurrentTokenText("+")
+            || isCurrentTokenText("-")
+        ) {
+            expressao();
+            lista_de_expressoes2();
+        } else {
+            error();
+        }
     }
 
     private void lista_de_expressoes2() {
         goNext();
-        if(isCurrentTokenText(",")) {
+        if (isCurrentTokenText(",")) {
             expressao();
             lista_de_expressoes2();
         }
     }
 
     private void expressao() {
-        expressao_simples();
-        // ou
-        lista_de_expressoes();
         goNext();
-        if (isCurrentTokenText(",")) {
-            expressao();
+        if (isCurrentTokenType(IDENTIFIER) 
+            || isCurrentTokenType(INT_NUMBER) 
+            || isCurrentTokenType(INT_NUMBER) 
+            || isCurrentTokenType(REAL_NUMBER) 
+            || isCurrentTokenText("true") 
+            || isCurrentTokenText("(") 
+            || isCurrentTokenText("not") 
+            || isCurrentTokenText("+") 
+            || isCurrentTokenText("-")
+        ) {
+            expressao_simples();
+            expressao_opt();
         } else {
             error();
         }
     }
 
+    private void expressao_opt() {
+        //goNext();
+        if (isCurrentTokenText("=") 
+            || isCurrentTokenText("<")
+            || isCurrentTokenText(">")
+            || isCurrentTokenText("<=")
+            || isCurrentTokenText(">=")
+            || isCurrentTokenText("<>")
+        ) {
+            op_relacional();
+            expressao_simples();
+        }
+    }
+
     private void expressao_simples() {
-        if (isCurrentTokenType(TokenType.IDENTIFIER)) {
+        //goNext();
+        if (isCurrentTokenType(IDENTIFIER)
+            || isCurrentTokenType(INT_NUMBER)
+            || isCurrentTokenType(REAL_NUMBER)
+            || isCurrentTokenText("true")
+            || isCurrentTokenText("(")
+            || isCurrentTokenText("not")
+        ) {
             termo();
-        } else if (isCurrentTokenText("-") || isCurrentTokenText("+")) {
+            expressao_simples2();
+        } else if (isCurrentTokenText("+") || isCurrentTokenText("-") ) {
             sinal();
             termo();
+            expressao_simples2();
         } else {
-            expressao_simples();
+            error();
+        }   
+    }
+
+    private void expressao_simples2() {
+        //goNext();
+        if (isCurrentTokenText("+")
+            || isCurrentTokenText("-")
+            || isCurrentTokenText("or")
+        ) {
             op_aditivo();
+            goNext();
             termo();
+            expressao_simples2();
         }
     }
 
     private void termo() {
-        fator();
-        // ou
-        termo();
-        op_multiplicativo();
-        fator();
+        //goNext();
+        if (isCurrentTokenType(IDENTIFIER)
+            || isCurrentTokenType(INT_NUMBER)
+            || isCurrentTokenType(REAL_NUMBER)
+            || isCurrentTokenText("true")
+            || isCurrentTokenText("(")
+            || isCurrentTokenText("not")
+        ) {
+            fator();
+            termo2();
+        } else {
+            error();
+        }
+    }
+
+    private void termo2() {
+        //goNext();
+        if (isCurrentTokenText("*")
+            || isCurrentTokenText("/")
+            || isCurrentTokenText("and")
+        ) {
+            op_multiplicativo();
+            fator();
+            termo2();
+        }
     }
 
     private void fator() {
-        goNext();
-        if (isCurrentTokenType(TokenType.IDENTIFIER)) {
-            goNext();
-            if (isCurrentTokenText("(")) {
-                lista_de_expressoes();
-                goNext();
-                if (!isCurrentTokenText(")")) {
-                    error();
-                }
-            }
-        } else if (isCurrentTokenType(TokenType.INT_NUMBER)) {
-
-        } else if (isCurrentTokenType(TokenType.REAL_NUMBER)) {
-
-        } else if (isCurrentTokenText("true")) {
-
-        } else if (isCurrentTokenText("false")) {
-
+        //goNext();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            fator_opt();
+        } else if (isCurrentTokenType(INT_NUMBER)
+                || isCurrentTokenType(REAL_NUMBER)
+                || isCurrentTokenText("true")
+        ) {
+            // passa
         } else if (isCurrentTokenText("(")) {
             expressao();
             goNext();
-            if (!isCurrentTokenText(")")) {
+            if (isCurrentTokenText(")")) {
+                // fim fator expressao
+            } else {
                 error();
             }
         } else if (isCurrentTokenText("not")) {
@@ -352,41 +473,65 @@ public class Parser {
         }
     }
 
+    private void fator_opt() {
+        //goNext();
+        if (isCurrentTokenText("(")) {
+            lista_de_expressoes();
+            goNext();
+            if (isCurrentTokenText(")")) {
+                // fim fator opt lista de expressoes
+            } else {
+                error();
+            }
+        }
+    }
+
     private void sinal() {
-        goNext();
-        if (!isCurrentTokenText("+") && !isCurrentTokenText("-")) {
+        //goNext();
+        if (isCurrentTokenText("+")
+            || isCurrentTokenText("-")
+        ) {
+            // ok
+        } else {
             error();
         }
     }
 
     private void op_relacional() {
-        if (!isCurrentTokenText("=") &&
-            !isCurrentTokenText("<") &&
-            !isCurrentTokenText(">") &&
-            !isCurrentTokenText("<=") &&
-            !isCurrentTokenText(">=") &&
-            !isCurrentTokenText("<>")) 
-        {
+        //goNext();
+        if (isCurrentTokenText("=") 
+            || isCurrentTokenText("<") 
+            || isCurrentTokenText(">")
+            || isCurrentTokenText("<=")
+            || isCurrentTokenText(">=")
+            || isCurrentTokenText("<>")
+        ){
+            // ok
+        } else {
             error();
         }
     }
 
-    private void op_aditivo () {
-        goNext();
-        if (!isCurrentTokenText("tktp") &&
-            !isCurrentTokenText("-") &&
-            !isCurrentTokenText("or")
+    private void op_aditivo() {
+        //goNext();
+        if (isCurrentTokenText("+") 
+            || isCurrentTokenText("-") 
+            || isCurrentTokenText("or")
         ) {
+                // ok
+        } else {
             error();
         }
     }
 
     private void op_multiplicativo() {
-        goNext();
-        if (!isCurrentTokenText("*") &&
-            !isCurrentTokenText("/") &&
-            !isCurrentTokenText("and")
+        //goNext();
+        if (isCurrentTokenText("*") 
+            || isCurrentTokenText("/")
+            || isCurrentTokenText("and")
         ) {
+            // ok
+        } else {
             error();
         }
     }
