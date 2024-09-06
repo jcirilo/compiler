@@ -9,16 +9,14 @@ public class Lexical {
         Scanner sc = new Scanner(source);
 		Token tk;
 		ArrayList<Token> buffer = new ArrayList<Token>();
-
 		while(true) {
 			tk = sc.nextToken();
 			if(tk == null) {
 				break;
 			}
 			buffer.add(tk);
-			System.out.println(tk);
 		}
-		
+		System.out.println("Lexical compilation sucessfully");
 		return buffer;
 	}
 }

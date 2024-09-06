@@ -9,16 +9,17 @@ import parser.Parser;
 public class Main {
 
 	public static void main(String[] args) {
+		ArrayList<Token> buffer;
 		Lexical lexicalAnalyzer = new Lexical();
 		Parser parserAnalyzer = new Parser();
-		ArrayList<Token> buffer;
+		String path = "exemplo.pas";
 		
-		buffer = lexicalAnalyzer.tokenizer("source_code.mc");
-		parserAnalyzer.setBuffer(buffer);
-		parserAnalyzer.parse();
-
-		System.out.println("Compilation Successful");
-
+		try {
+			buffer = lexicalAnalyzer.tokenizer(path);
+			parserAnalyzer.parse(buffer);
+		} catch (RuntimeException e ){
+			System.out.println(e.getMessage());
+		}
 	}
 
 }

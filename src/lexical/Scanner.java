@@ -61,7 +61,7 @@ public class Scanner {
 			currentChar = nextChar();
 
 			if (isInvalidCharacter(currentChar)) {
-				error("Invalid character: " + content + currentChar);	
+				error("Invalid character: '" + content + currentChar + "'");
 			}
 
 			switch (state) {
@@ -76,21 +76,21 @@ public class Scanner {
 						state = 2;
 					} else if (isDot(currentChar)) { 
 						content+= currentChar;
-						return new Token(TokenType.DELIMITER, content);
+						return new Token(TokenType.DELIMITER, content, row, col);
 					} else if (isHashtag(currentChar)) {
 						state = 3;
 					} else if (isAddOperator(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.ADD_OPERATOR, content);
+						return new Token(TokenType.ADD_OPERATOR, content, row, col);
 					} else if (isMultOperator(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.MULT_OPERATOR, content);
+						return new Token(TokenType.MULT_OPERATOR, content, row, col);
 					} else if (isTwoDots(currentChar)) {
 						content += currentChar;
 						state = 4;
 					} else if (isEquals(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.REL_OPERATOR, content);
+						return new Token(TokenType.REL_OPERATOR, content, row, col);
 					} else if (isLessThan(currentChar)) {
 						content += currentChar;
 						state = 5;
@@ -99,9 +99,9 @@ public class Scanner {
 						state = 7;
 					} else if (isDelimiter(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.DELIMITER, content);
+						return new Token(TokenType.DELIMITER, content, row, col);
 					} else {
-						error("Unexpected character: " + currentChar);
+						error("Unexpected character: '" + currentChar + "'");
 					}
 					break;
 
@@ -111,10 +111,10 @@ public class Scanner {
 						state = 1;
 					} else if (reservedWords.containsKey(content)) {
 						back();
-						return new Token(reservedWords.get(content), content);
+						return new Token(reservedWords.get(content), content, row, col);
 					} else {
 						back();
-						return new Token(TokenType.IDENTIFIER, content);
+						return new Token(TokenType.IDENTIFIER, content, row, col);
 					}
 					break;
 
@@ -126,10 +126,10 @@ public class Scanner {
 						content += currentChar;
 						state = 6;
 					} else if (isLetter(currentChar) || isUnderscore(currentChar)) {
-						error("Malformed number: " + content + currentChar);
+						error("Malformed number: '" + content + currentChar + "'");
 					}else {
 						back();
-						return new Token(TokenType.INT_NUMBER, content);
+						return new Token(TokenType.INT_NUMBER, content, row, col);
 					}
 					break;
 
@@ -143,18 +143,18 @@ public class Scanner {
 				case 4:
 					if (isEquals(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.ASSIGNMENT, content);
+						return new Token(TokenType.ASSIGNMENT, content, row, col);
 					} else {
 						back();
-						return new Token(TokenType.DELIMITER, content);
+						return new Token(TokenType.DELIMITER, content, row, col);
 					}
 				case 5:
 					if (isEquals(currentChar) || isGreaterThan(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.REL_OPERATOR, content);
+						return new Token(TokenType.REL_OPERATOR, content, row, col);
 					} else {
 						back();
-						return new Token(TokenType.REL_OPERATOR, content);
+						return new Token(TokenType.REL_OPERATOR, content, row, col);
 					}
 
 				case 6:
@@ -162,19 +162,19 @@ public class Scanner {
 						content += currentChar;
 						state = 6;
 					} else if (isLetter(currentChar) || isUnderscore(currentChar) || isDot(currentChar)) {
-						error("Malformed number: " + content + currentChar);
+						error("Malformed number: '" + content + currentChar + "'");
 					} else {
 						back();
-						return new Token(TokenType.REAL_NUMBER, content);
+						return new Token(TokenType.REAL_NUMBER, content, row, col);
 					}
 					break;
 				case 7:
 					if (isEquals(currentChar)) {
 						content += currentChar;
-						return new Token(TokenType.REL_OPERATOR, content);
+						return new Token(TokenType.REL_OPERATOR, content, row, col);
 					} else {
 						back();
-						return new Token(TokenType.REL_OPERATOR, content);
+						return new Token(TokenType.REL_OPERATOR, content, row, col);
 					}
 				default:
 					break;
@@ -274,7 +274,13 @@ public class Scanner {
 	}
 
 	private void error(String message){
-		throw new RuntimeException("Error on line " + row + " and column " + col + " - " + message);	
+		throw new RuntimeException(
+			"Lexical Error: " 
+			+ message 
+			+ " at line " 
+			+ row
+			+ ", column " 
+			+ col);	
 	}
 
 	private boolean isEOF() {
