@@ -29,25 +29,29 @@ public class Parser {
         System.out.println("Syntatic compilation successfully");
     }
 
+    // token atual = próximo token
     private void advance() {
         if (pos < buffer.size()) {
             currentToken = buffer.get(pos++);
-            text = currentToken.getText();
-            type = currentToken.getType().name();
+            text = currentToken.getText();          // debug
+            type = currentToken.getType().name();   // debug
         } else {
             currentToken = null; // final de input
         }
     }
 
+    // auxiliar pra verificar o tipo do token
     private boolean isCurrentTokenType(TokenType t) {
         return currentToken != null && currentToken.getType() == t;
     }
 
+    // auxiliar para verificar a string do token
     private boolean isCurrentTokenText(String s) {
         return currentToken != null && currentToken.getText().equals(s);
     }
 
-    // Método para correspondência de texto
+    // auxiliar para correspondência de string do token
+    // esse método verifica a string e avança ou alerta erro
     private void match(String expectedText) {
         if (isCurrentTokenText(expectedText)) {
             advance();
@@ -56,7 +60,8 @@ public class Parser {
         }
     }
 
-    // Método para correspondência de tipo de token
+    // auxiliar para correspondência do tipo do token
+    // esse método verifica o tipo e avança ou alerta erro
     private void match(TokenType expectedType) {
         if (isCurrentTokenType(expectedType)) {
             advance();
@@ -212,8 +217,11 @@ public class Parser {
 
     // Método para a produção COMANDOS_OPCIONAIS
     private void comandos_opcionais() {
-        if (isCurrentTokenType(IDENTIFIER) || isCurrentTokenText("begin") || isCurrentTokenText("if") || isCurrentTokenText("while")) {
-            lista_de_comandos();
+        if (isCurrentTokenType(IDENTIFIER) || 
+            isCurrentTokenText("begin") || 
+            isCurrentTokenText("if") || 
+            isCurrentTokenText("while")) {
+                lista_de_comandos();
         }
         // epsilon - não fazer nada
     }
@@ -228,13 +236,18 @@ public class Parser {
     private void lista_de_comandos2() {
         if (isCurrentTokenText(";")) {
             advance();
-            comando();
-            lista_de_comandos2();
+            // verifica se o token é um end para parar o loop de lista de comandos
+            // tava dando um erro infernal aq
+            if (!isCurrentTokenText("end")) {
+                comando();
+                lista_de_comandos2();
+            }
         }
         // epsilon - não fazer nada
     }
 
     // Método para a produção COMANDO
+    // ESTÁ FUNCIONANDO NÃO MEXA!!!!!!!!!
     private void comando() {
         if (isCurrentTokenType(IDENTIFIER)) {
             match(IDENTIFIER);
@@ -267,7 +280,7 @@ public class Parser {
             lista_de_expressoes();
             match(")");
         }
-        // epsilon - não fazer nada
+        // epsilon - não fazer nada  
     }
 
     // Método para a produção PARTE_ELSE
@@ -350,7 +363,9 @@ public class Parser {
         if (isCurrentTokenType(IDENTIFIER)) {
             match(IDENTIFIER);
             fator_opt();
-        } else if (isCurrentTokenType(INT_NUMBER) || isCurrentTokenType(REAL_NUMBER) || isCurrentTokenText("true")) {
+        } else if ( isCurrentTokenType(INT_NUMBER) || 
+                    isCurrentTokenType(REAL_NUMBER) || 
+                    isCurrentTokenText("true")) {
             advance();
         } else if (isCurrentTokenText("(")) {
             advance();
