@@ -12,7 +12,7 @@ public class Token {
 		this.type = type;
 		this.text = text;
 		this.row = row;
-		this.col = col;
+		this.col = col-text.length()+1;
 	}
 
 	public TokenType getType() {
