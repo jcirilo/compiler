@@ -194,7 +194,7 @@ public class Scanner {
 	}
 
 	private boolean isLeftCurlyBracket (char c) {
-		return c == '}';
+		return c == '{';
 	}
 
 	private boolean isRightCurlyBracket (char c) {
