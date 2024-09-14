@@ -77,7 +77,7 @@ public class Scanner {
 					} else if (isDot(currentChar)) { 
 						content+= currentChar;
 						return new Token(TokenType.DELIMITER, content, row, col);
-					} else if (isHashtag(currentChar)) {
+					} else if (isLeftCurlyBracket(currentChar)) {
 						state = 3;
 					} else if (isAddOperator(currentChar)) {
 						content += currentChar;
@@ -134,8 +134,11 @@ public class Scanner {
 					break;
 
 				case 3:
-					while (!isEndOfLine(currentChar)) {
+					while (!isRightCurlyBracket(currentChar)) {
 						currentChar = nextChar();
+						if (isEndOfLine(currentChar)) {
+							error("Right curly bracket of comment is missing '}'");
+						}
 					}
 					state = 0;
 					break;
@@ -190,8 +193,12 @@ public class Scanner {
 		return c == '_';
 	}
 
-	private boolean isHashtag (char c) {
-		return c == '#';
+	private boolean isLeftCurlyBracket (char c) {
+		return c == '}';
+	}
+
+	private boolean isRightCurlyBracket (char c) {
+		return c == '}';
 	}
 
 	private boolean isEndOfLine(char c) {
