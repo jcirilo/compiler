@@ -3,10 +3,10 @@ import java.util.ArrayList;
 
 // PILHA DE ESCOPO DE IDENTIFICADORES
 
-public class ScopeIDStack {
+public class ScopeStack {
     private ArrayList<String> ids;
 
-    public ScopeIDStack() {
+    public ScopeStack() {
         ids = new ArrayList<String>();
     }
 
@@ -23,7 +23,13 @@ public class ScopeIDStack {
 
     // Métodod para verificar se já ha o id no escopo
     // Procura o primeiro id antes e até o $
-    public boolean contains(String id) {
+    // Ex.:
+    //                      topo
+    //                       v
+    // pilha: [$ a b c $ x y z]
+    //                 ^
+    //            procura o id até esse simbolo
+    public boolean scopeContains(String id) {
         if (id == "$") {
             return false;
         }
@@ -40,7 +46,19 @@ public class ScopeIDStack {
         return false;
     }
 
+    // procura o identificador em toda a a pilha
+    // serve para na parte de ativação de procedimentos
+    public boolean contains(String id) {
+        return ids.contains(id);
+    }
+
     // Limpa todas variáveis declaradas dentro de um escopo
+    // Ex.:
+    // pilha:
+    // [$ a b c $ x y z]
+    //
+    // pilha dps chamar de cleanScope() 1 vez:
+    // [$ a b c]
     public void cleanScope () {
         String popedId = pop(); 
         while (!popedId.equals("$")) {
@@ -48,7 +66,6 @@ public class ScopeIDStack {
         }
     }
 
-    // Para debug
     @Override
     public String toString() {
         String data = new String("[");
