@@ -8,8 +8,8 @@ public class Parser {
     ArrayList<Token> buffer;
     private int pos;
     private Token currentToken;
-    private String text; // debug
-    private String type; // debug
+    private String text; // para debug
+    private String type; // para debug
 
     public Parser() {
         this.pos = 0;
@@ -19,6 +19,7 @@ public class Parser {
         this.type = null;
     }
 
+    // inicia a analize a partir de um buffer de tokens
     public void parse(ArrayList<Token> buffer) {
         this.buffer = buffer;
         if (this.buffer == null) {
@@ -98,7 +99,6 @@ public class Parser {
             + currentToken.getText() + "'.");
     }
 
-    // Método para a produção PROGRAMA
     private void programa() {
         if (isCurrentTokenText("program")) {
             advance();
@@ -113,7 +113,6 @@ public class Parser {
         }
     }
 
-    // Método para a produção DECLARACOES_VARIAVEIS
     private void declaracoes_variaveis() {
         if (isCurrentTokenText("var")) {
             advance();
@@ -122,7 +121,6 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção LISTA_DECLARACOES_VARIAVEIS
     private void lista_declaracoes_variaveis() {
         lista_de_identificadores();
         match(":");
@@ -131,7 +129,6 @@ public class Parser {
         lista_declaracoes_variaveis2();
     }
 
-    // Método para a produção LISTA_DECLARACOES_VARIAVEIS2
     private void lista_declaracoes_variaveis2() {
         if (isCurrentTokenType(IDENTIFIER)) {
             lista_de_identificadores();
@@ -143,13 +140,11 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção LISTA_DE_IDENTIFICADORES
     private void lista_de_identificadores() {
         match(IDENTIFIER);
         lista_de_identificadores2();
     }
 
-    // Método para a produção LISTA_DE_IDENTIFICADORES2
     private void lista_de_identificadores2() {
         if (isCurrentTokenText(",")) {
             advance();
@@ -159,7 +154,6 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção TIPO
     private void tipo() {
         if (isCurrentTokenText("integer")
             || isCurrentTokenText("real")
@@ -170,12 +164,10 @@ public class Parser {
         }
     }
 
-    // Método para a produção DECLARACOES_DE_SUBPROGRAMAS
     private void declaracoes_de_subprogramas() {
         declaracoes_de_subprogramas2();
     }
 
-    // Método para a produção DECLARACOES_DE_SUBPROGRAMAS2
     private void declaracoes_de_subprogramas2() {
         if (isCurrentTokenText("procedure")) {
             declaracao_de_subprograma();
@@ -185,7 +177,6 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção DECLARACAO_DE_SUBPROGRAMA
     private void declaracao_de_subprograma() {
         match("procedure");
         match(IDENTIFIER);
@@ -196,7 +187,6 @@ public class Parser {
         comando_composto();
     }
 
-    // Método para a produção ARGUMENTOS
     private void argumentos() {
         if (isCurrentTokenText("(")) {
             advance();
@@ -206,7 +196,6 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção LISTA_DE_PARAMETROS
     private void lista_de_parametros() {
         lista_de_identificadores();
         match(":");
@@ -214,8 +203,6 @@ public class Parser {
         lista_de_parametros2();
     }
 
-
-    // Método para a produção LISTA_DE_PARAMETROS2
     private void lista_de_parametros2() {
         if (isCurrentTokenText(";")) {
             advance();
@@ -248,8 +235,6 @@ public class Parser {
         }
     }   
 
-
-    // Método para a produção COMANDOS_OPCIONAIS
     private void comandos_opcionais() {
         if (isCurrentTokenType(IDENTIFIER) || 
             isCurrentTokenText("begin") || 
@@ -260,18 +245,16 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção LISTA_DE_COMANDOS
     private void lista_de_comandos() {
         comando();
         lista_de_comandos2();
     }
 
-    // Método para a produção LISTA_DE_COMANDOS2
     private void lista_de_comandos2() {
         if (isCurrentTokenText(";")) {
             advance();
-            // verifica se o token é um end para parar o loop de lista de comandos
-            // tava dando um erro infernal aq
+            // permite que ";" seja opicional ao final 
+            // do ultimo comando  do escopo
             if (!isCurrentTokenText("end")) {
                 comando();
                 lista_de_comandos2();
@@ -335,10 +318,8 @@ public class Parser {
         } else {
             error();  // caso o token atual não corresponda a nenhum caso esperado
         }
-    }
-    
+    }   
 
-    // Método para a produção COMANDO_OPT
     private void comando_opt() {
         if (isCurrentTokenText(":=")) {
             advance();
@@ -351,7 +332,6 @@ public class Parser {
         // epsilon - não fazer nada  
     }
 
-    // Método para a produção PARTE_ELSE
     private void parte_else() {
         if (isCurrentTokenText("else")) {
             advance();
@@ -360,13 +340,11 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção LISTA_DE_EXPRESSOES
     private void lista_de_expressoes() {
         expressao();
         lista_de_expressoes2();
     }
 
-    // Método para a produção LISTA_DE_EXPRESSOES2
     private void lista_de_expressoes2() {
         if (isCurrentTokenText(",")) {
             advance();
@@ -376,13 +354,11 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção EXPRESSAO
     private void expressao() {
         expressao_simples();
         expressao_opt();
     }
 
-    // Método para a produção EXPRESSAO_OPT
     private void expressao_opt() {
         if (isCurrentTokenType(REL_OPERATOR)) {
             advance();
@@ -391,7 +367,6 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção EXPRESSAO_SIMPLES
     /*private void expressao_simples() {
         if (isCurrentTokenText("+") || isCurrentTokenText("-")) {
             sinal();
@@ -437,7 +412,6 @@ public class Parser {
     }
 
 
-    // Método para a produção TERMO
         private void termo() {
         fator();
         termo2();
@@ -509,7 +483,6 @@ public class Parser {
         
     }
 
-    // Método para a produção FATOR_OPT
     private void fator_opt() {
         if (isCurrentTokenText("(")) {
             advance();
@@ -519,7 +492,6 @@ public class Parser {
         // epsilon - não fazer nada
     }
 
-    // Método para a produção SINAL
     private void sinal() {
         if (isCurrentTokenText("+") || isCurrentTokenText("-")) {
             advance();
