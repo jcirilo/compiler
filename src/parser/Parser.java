@@ -56,7 +56,7 @@ public class Parser {
         if (isCurrentTokenText(expectedText)) {
             advance();
         } else {
-            error();
+            errorExpected(expectedText);
         }
     }
 
@@ -70,6 +70,7 @@ public class Parser {
         }
     }
 
+    // erro - token inesperado
     private void error() {
         throw new RuntimeException(
             "Syntatic Error: unexpected token '" 
@@ -78,6 +79,23 @@ public class Parser {
             + currentToken.getRow() 
             + ", column " 
             + currentToken.getCol());
+    }
+
+    // erro - faltando algo
+    private void errorExpected(String expectedText){
+        throw new RuntimeException(
+            "Syntatic Error: missing '" + expectedText + "' at line "
+            + currentToken.getRow() + ", column "
+            + currentToken.getCol() + ". Found '" + currentToken.getText() + "' instead.");
+    }
+
+    // erro - expressão mal formatada
+    private void errorMalformedExpression() {
+        throw new RuntimeException(
+            "Syntatic Error: malformed expression at line "
+            + currentToken.getRow() + ", column "
+            + currentToken.getCol() + ". Unexpected token: '" 
+            + currentToken.getText() + "'.");
     }
 
     // Método para a produção PROGRAMA
@@ -196,6 +214,7 @@ public class Parser {
         lista_de_parametros2();
     }
 
+
     // Método para a produção LISTA_DE_PARAMETROS2
     private void lista_de_parametros2() {
         if (isCurrentTokenText(";")) {
@@ -209,11 +228,26 @@ public class Parser {
     }
 
     // Método para a produção COMANDO_COMPOSTO
-    private void comando_composto() {
+    /*private void comando_composto() {
         match("begin");
         comandos_opcionais();
         match("end");
-    }
+    }*/
+    private void comando_composto() {
+        if(isCurrentTokenText("begin")){
+            match("begin");
+            comandos_opcionais();
+
+            if(isCurrentTokenText("end")){
+                match("end");
+            }else{
+                errorExpected("end");
+            }
+        } else{
+            errorExpected("begin");
+        }
+    }   
+
 
     // Método para a produção COMANDOS_OPCIONAIS
     private void comandos_opcionais() {
@@ -248,7 +282,8 @@ public class Parser {
 
     // Método para a produção COMANDO
     // ESTÁ FUNCIONANDO NÃO MEXA!!!!!!!!!
-    private void comando() {
+    
+    /*private void comando() {
         if (isCurrentTokenType(IDENTIFIER)) {
             match(IDENTIFIER);
             comando_opt();
@@ -268,7 +303,40 @@ public class Parser {
         } else {
             error();
         }
+    }*/
+
+
+    // MEXI PERDÃO, MAS O TEU TÁ COMENTADO EM CIMA!!
+    private void comando() {
+        if (isCurrentTokenType(IDENTIFIER)) {
+            match(IDENTIFIER);
+            comando_opt();
+        } else if (isCurrentTokenText("begin")) {
+            comando_composto();
+        } else if (isCurrentTokenText("if")) {
+            advance();
+            expressao();
+            if (isCurrentTokenText("then")) {
+                match("then");
+                comando();
+                parte_else();
+            } else {
+                errorExpected("then");  // Se "then" estiver ausente após "if"
+            }
+        } else if (isCurrentTokenText("while")) {
+            advance();
+            expressao();
+            if (isCurrentTokenText("do")) {
+                match("do");
+                comando();
+            } else {
+                errorExpected("do");  // se "do" estiver ausente após "while"
+            }
+        } else {
+            error();  // caso o token atual não corresponda a nenhum caso esperado
+        }
     }
+    
 
     // Método para a produção COMANDO_OPT
     private void comando_opt() {
@@ -324,42 +392,77 @@ public class Parser {
     }
 
     // Método para a produção EXPRESSAO_SIMPLES
-    private void expressao_simples() {
+    /*private void expressao_simples() {
         if (isCurrentTokenText("+") || isCurrentTokenText("-")) {
             sinal();
         }
         termo();
         expressao_simples2();
-    }
+    }*/
 
+    private void expressao_simples(){
+        if(isCurrentTokenText("+") || isCurrentTokenText("-")) {
+            sinal();
+        } 
+        
+        if(!isCurrentTokenType(IDENTIFIER) && 
+        !isCurrentTokenType(INT_NUMBER) && 
+        !isCurrentTokenType(REAL_NUMBER) && 
+        !isCurrentTokenText("(") && 
+        !isCurrentTokenText("true") && 
+        !isCurrentTokenText("not")) {
+        errorMalformedExpression();
+        }
+        
+        termo();
+        expressao_simples2();
+        
+    }
+  
     // Método para a produção EXPRESSAO_SIMPLES2
-    private void expressao_simples2() {
+    /*private void expressao_simples2() {
         if (isCurrentTokenType(ADD_OPERATOR) || isCurrentTokenText("or")) {
             advance();
             termo();
             expressao_simples2();
         }
         // epsilon - não fazer nada
+    }*/
+
+    private void expressao_simples2(){
+        while(isCurrentTokenType(ADD_OPERATOR) || isCurrentTokenText("or")){
+            advance();
+            termo();
+        }
     }
 
+
     // Método para a produção TERMO
-    private void termo() {
+        private void termo() {
         fator();
         termo2();
     }
+    
 
     // Método para a produção TERMO2
-    private void termo2() {
+    /*private void termo2() {
         if (isCurrentTokenType(MULT_OPERATOR) || isCurrentTokenText("and")) {
             advance();
             fator();
             termo2();
         }
         // epsilon - não fazer nada
+    }*/
+
+    private void termo2(){
+        while(isCurrentTokenType(MULT_OPERATOR)|| isCurrentTokenText("and")){
+            advance();
+            fator();
+        }
     }
 
     // Método para a produção FATOR
-    private void fator() {
+/*    private void fator() {
         if (isCurrentTokenType(IDENTIFIER)) {
             match(IDENTIFIER);
             fator_opt();
@@ -378,6 +481,33 @@ public class Parser {
             error();
         }
     }
+*/
+
+    private void fator(){
+        if(isCurrentTokenType(IDENTIFIER)){
+            match(IDENTIFIER);
+            fator_opt();
+        }else if(isCurrentTokenType(INT_NUMBER) ||
+                 isCurrentTokenType(REAL_NUMBER) ||
+                 isCurrentTokenText("true")){
+          advance();          
+        } else if(isCurrentTokenText("(")){
+            advance();
+            expressao();
+            //match(")");
+            if(!isCurrentTokenText(")")){
+                errorExpected(")");
+            }else{
+                advance();
+            }
+        }else if(isCurrentTokenText("not")){
+            advance();
+            fator();
+        }else {
+            errorMalformedExpression(); 
+        } 
+        
+    }
 
     // Método para a produção FATOR_OPT
     private void fator_opt() {
@@ -394,7 +524,8 @@ public class Parser {
         if (isCurrentTokenText("+") || isCurrentTokenText("-")) {
             advance();
         } else {
-            error();
+            //error();
+            errorExpected("sign ('+' or '-')");
         }
     }
 }
