@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
-
+import java.util.ArrayList;
 import utils.TokenType;
 
 public class Scanner {
@@ -24,8 +24,21 @@ public class Scanner {
 			String buffer = new String(Files.readAllBytes(Paths.get(source))).concat("\n");
 			sourceBuffer = buffer.toCharArray();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
+	}
+
+	public ArrayList<Token> tokenizer() {
+        Token tk;
+		ArrayList<Token> buffer = new ArrayList<Token>();
+		while(true) {
+			tk = nextToken();
+			if(tk == null) {
+				break;
+			}
+			buffer.add(tk);
+		}
+		return buffer;
 	}
 
 	private void initializeReservedWords() {
