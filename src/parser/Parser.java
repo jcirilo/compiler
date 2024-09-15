@@ -1,33 +1,38 @@
 package parser;
 import utils.TokenType;
+import utils.ScopeIDStack;
 import static utils.TokenType.*;
 import java.util.ArrayList;
 import lexical.Token;
 
 public class Parser {
-    ArrayList<Token> buffer;
+    private ArrayList<Token> buffer;
     private int pos;
     private Token currentToken;
+    private ScopeIDStack scopeIDs;
     private String text; // para debug
-    private String type; // para debug
-
+    private String type; // para debug 
+    private String sIDs; // para debug
     public Parser() {
         this.pos = 0;
         this.buffer = null;
         this.currentToken = null;
         this.text = null;
         this.type = null;
+        this.sIDs = null;
+        this.scopeIDs = new ScopeIDStack();
     }
 
     // inicia a analize a partir de um buffer de tokens
     public void parse(ArrayList<Token> buffer) {
         this.buffer = buffer;
         if (this.buffer == null) {
-            throw new RuntimeException("Syntatic Error: null token buffer");
+            throw new RuntimeException("Syntatic Error: buffer of tokens is null");
         }
         advance(); // Avançar para o primeiro token
         programa();
         System.out.println("Syntatic compilation successfully");
+        System.out.println(scopeIDs.toString());
     }
 
     // token atual = próximo token
@@ -99,8 +104,30 @@ public class Parser {
             + currentToken.getText() + "'.");
     }
 
+
+    private void tryToPush(String id) {
+        if (scopeIDs.contains(id)) {
+            throw new RuntimeException(
+                "Semantic Error: at line "
+                + currentToken.getRow() + ", column " 
+                + currentToken.getCol()  + ". '"
+                + id + "' is already declared");
+        } else {
+            scopeIDs.push(id);
+            sIDs = scopeIDs.toString();
+        }
+    }
+
+    private void cleanScope() {
+        scopeIDs.cleanScope();
+        sIDs = scopeIDs.toString();
+    }
+
     private void programa() {
         if (isCurrentTokenText("program")) {
+            // para o semântico ficar mais visível e quebrar os
+            // padroões do código
+            tryToPush("$");                     // NOVO ESCOPO PILHA SEMÂNTICA
             advance();
             match(TokenType.IDENTIFIER);
             match(";");
@@ -108,6 +135,7 @@ public class Parser {
             declaracoes_de_subprogramas();
             comando_composto();
             match(".");
+            cleanScope();                       // LIMPAR ESCOPO PILHA SEMÂNTICA
         } else {
             error();
         }
@@ -141,15 +169,25 @@ public class Parser {
     }
 
     private void lista_de_identificadores() {
-        match(IDENTIFIER);
-        lista_de_identificadores2();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            tryToPush(currentToken.getText());      // EMPILHAR NO ESCOPO PILHA SEMÂNTICA
+            match(IDENTIFIER);
+            lista_de_identificadores2();
+        } else {
+            errorExpected("identifier");
+        }
     }
 
     private void lista_de_identificadores2() {
         if (isCurrentTokenText(",")) {
             advance();
-            match(IDENTIFIER);
-            lista_de_identificadores2();
+            if (isCurrentTokenType(IDENTIFIER)) {
+                tryToPush(currentToken.getText());   // EMPILHAR NO ESCOPO PILHA SEMÂNTICA
+                match(IDENTIFIER);
+                lista_de_identificadores2();
+            } else {
+                errorExpected("identifier");
+            }
         }
         // epsilon - não fazer nada
     }
@@ -180,11 +218,13 @@ public class Parser {
     private void declaracao_de_subprograma() {
         match("procedure");
         match(IDENTIFIER);
+        tryToPush("$");
         argumentos();
         match(";");
         declaracoes_variaveis();
         declaracoes_de_subprogramas();
         comando_composto();
+        cleanScope();
     }
 
     private void argumentos() {
@@ -223,10 +263,12 @@ public class Parser {
     private void comando_composto() {
         if(isCurrentTokenText("begin")){
             match("begin");
+            tryToPush("$");                         // NOVO ESCOPO PILHA SEMÂNTICA
             comandos_opcionais();
 
             if(isCurrentTokenText("end")){
                 match("end");
+                cleanScope();                       // LIMPAR ESCOPO PILHA SEMÂNTICA
             }else{
                 errorExpected("end");
             }
