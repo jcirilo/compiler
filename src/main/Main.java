@@ -1,6 +1,9 @@
 package main;
 
+import java.util.ArrayList;
+
 import lexical.Scanner;
+import lexical.Token;
 import parser.Parser;
 
 public class Main {
@@ -18,7 +21,10 @@ public class Main {
 	public static void test(String fileName) {
 		try {
 			String path = "%s/%s".formatted(System.getProperty("user.dir"), fileName);
-			new Parser().parse(new Scanner(path).tokenizer());
+			Parser parserAnalyzer = new Parser();
+			Scanner lexicalAnalyzer = new Scanner(path);
+			ArrayList<Token> buffer = lexicalAnalyzer.tokenizer(); 
+			parserAnalyzer.parse(buffer);
 			System.out.println(fileName + "\t\t" + "compilation sucessfully");
 		} catch (RuntimeException e) {
 			System.out.println(fileName + "\t\t" + e.getLocalizedMessage());
