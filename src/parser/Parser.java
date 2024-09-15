@@ -1,6 +1,6 @@
 package parser;
 import utils.TokenType;
-import utils.ScopeIDStack;
+import utils.ScopeStack;
 import static utils.TokenType.*;
 import java.util.ArrayList;
 import lexical.Token;
@@ -9,7 +9,7 @@ public class Parser {
     private ArrayList<Token> buffer;
     private int pos;
     private Token currentToken;
-    private ScopeIDStack scopeIDs;
+    private ScopeStack scopeIDs;
     private String text; // para debug
     private String type; // para debug 
     private String sIDs; // para debug
@@ -20,7 +20,7 @@ public class Parser {
         this.text = null;
         this.type = null;
         this.sIDs = null;
-        this.scopeIDs = new ScopeIDStack();
+        this.scopeIDs = new ScopeStack();
     }
 
     // inicia a analize a partir de um buffer de tokens
@@ -31,8 +31,6 @@ public class Parser {
         }
         advance(); // Avançar para o primeiro token
         programa();
-        System.out.println("Syntatic compilation successfully");
-        System.out.println(scopeIDs.toString());
     }
 
     // token atual = próximo token
@@ -41,9 +39,9 @@ public class Parser {
             currentToken = buffer.get(pos++);
             text = currentToken.getText();          // debug
             type = currentToken.getType().name();   // debug
-        } else {
-            currentToken = null; // final de input
-        }
+        }// else {
+        //     currentToken = null; // final de input
+        // }
     }
 
     // auxiliar pra verificar o tipo do token
@@ -104,9 +102,18 @@ public class Parser {
             + currentToken.getText() + "'.");
     }
 
+    private void errorUndeclared() {
+        throw new RuntimeException(
+            "Semantic Error: undeclared var/procedure '"
+            + currentToken.getText() + "' at line "
+            + currentToken.getRow() + ", column "
+            + currentToken.getCol()
+        );
+    }
+
 
     private void tryToPush(String id) {
-        if (scopeIDs.contains(id)) {
+        if (scopeIDs.scopeContains(id)) {
             throw new RuntimeException(
                 "Semantic Error: at line "
                 + currentToken.getRow() + ", column " 
@@ -114,13 +121,13 @@ public class Parser {
                 + id + "' is already declared");
         } else {
             scopeIDs.push(id);
-            sIDs = scopeIDs.toString();
+            sIDs = scopeIDs.toString(); // debug
         }
     }
 
     private void cleanScope() {
         scopeIDs.cleanScope();
-        sIDs = scopeIDs.toString();
+        sIDs = scopeIDs.toString(); // debug
     }
 
     private void programa() {
@@ -217,14 +224,17 @@ public class Parser {
 
     private void declaracao_de_subprograma() {
         match("procedure");
-        match(IDENTIFIER);
-        tryToPush("$");
-        argumentos();
-        match(";");
-        declaracoes_variaveis();
-        declaracoes_de_subprogramas();
-        comando_composto();
-        cleanScope();
+        if (isCurrentTokenType(IDENTIFIER)) {
+            tryToPush(currentToken.getText());
+            match(IDENTIFIER);
+            tryToPush("$");
+            argumentos();
+            match(";");
+            declaracoes_variaveis();
+            declaracoes_de_subprogramas();
+            comando_composto();
+            cleanScope();
+        }
     }
 
     private void argumentos() {
@@ -334,8 +344,13 @@ public class Parser {
     // MEXI PERDÃO, MAS O TEU TÁ COMENTADO EM CIMA!!
     private void comando() {
         if (isCurrentTokenType(IDENTIFIER)) {
-            match(IDENTIFIER);
-            comando_opt();
+            // Variável e Ativacao_de_procedimento
+            if (scopeIDs.contains(currentToken.getText())) {  // pilha semantico p/ var/procedimentos
+                match(IDENTIFIER);                            // dos escopos superiores
+                comando_opt();
+            } else {
+                errorUndeclared();
+            }
         } else if (isCurrentTokenText("begin")) {
             comando_composto();
         } else if (isCurrentTokenText("if")) {
@@ -428,7 +443,7 @@ public class Parser {
         !isCurrentTokenText("(") && 
         !isCurrentTokenText("true") && 
         !isCurrentTokenText("not")) {
-        errorMalformedExpression();
+            errorMalformedExpression();
         }
         
         termo();
@@ -437,44 +452,28 @@ public class Parser {
     }
   
     // Método para a produção EXPRESSAO_SIMPLES2
-    /*private void expressao_simples2() {
+    private void expressao_simples2() {
         if (isCurrentTokenType(ADD_OPERATOR) || isCurrentTokenText("or")) {
             advance();
             termo();
             expressao_simples2();
         }
         // epsilon - não fazer nada
-    }*/
-
-    private void expressao_simples2(){
-        while(isCurrentTokenType(ADD_OPERATOR) || isCurrentTokenText("or")){
-            advance();
-            termo();
-        }
     }
 
-
-        private void termo() {
+    private void termo() {
         fator();
         termo2();
     }
-    
 
     // Método para a produção TERMO2
-    /*private void termo2() {
+    private void termo2() {
         if (isCurrentTokenType(MULT_OPERATOR) || isCurrentTokenText("and")) {
             advance();
             fator();
             termo2();
         }
-        // epsilon - não fazer nada
-    }*/
-
-    private void termo2(){
-        while(isCurrentTokenType(MULT_OPERATOR)|| isCurrentTokenText("and")){
-            advance();
-            fator();
-        }
+        // epsilon
     }
 
     // Método para a produção FATOR
