@@ -114,6 +114,14 @@ public class Parser {
         );
     }
 
+    private void errorAlreadyDeclared() {
+        throw new RuntimeException(
+            "Semantic Error: at line "
+            + currentToken.getRow() + ", column " 
+            + currentToken.getCol()  + ". '"
+            + currentToken.getText() + "' is already declared");
+    }
+
     private void errorType () {
         Token tkErr = PcT.get(PcT.size()-1);
         throw new RuntimeException (
@@ -128,11 +136,7 @@ public class Parser {
 
     private void tryToPush(String id, TokenType tt) {
         if (scopeStack.scopeContains(id)) {
-            throw new RuntimeException(
-                "Semantic Error: at line "
-                + currentToken.getRow() + ", column " 
-                + currentToken.getCol()  + ". '"
-                + currentToken.getText() + "' is already declared");
+            errorAlreadyDeclared();
         } else {
             Token tk = new Token(tt, id, currentToken.getRow(), currentToken.getCol());
             scopeStack.push(tk);
@@ -150,7 +154,7 @@ public class Parser {
         sIDs = scopeStack.toString();
     }
 
-    private Token getTokenDataFromScopeStack(String id) {
+    private Token findTokenOnScopeStack(String id) {
         Token tk;
         for (int i = 1; i != scopeStack.size(); i++) {
             tk = scopeStack.getFromTop(i); 
@@ -383,7 +387,7 @@ public class Parser {
             if (scopeStack.contains(currentToken.getText())) {
                 // adiciona uma cópia de uma variavel ja declarada na pilha TcP
                 // com a linha e a coluna onde ela esta sendo usada
-                Token tkAux = getTokenDataFromScopeStack(currentToken.getText());
+                Token tkAux = findTokenOnScopeStack(currentToken.getText());
                 PcT.add(new Token(
                     tkAux.getType(),
                     tkAux.getText(),
@@ -521,7 +525,7 @@ public class Parser {
         if (isCurrentTokenType(IDENTIFIER)) {
             // adiciona uma cópia de uma variavel ja declarada na pilha TcP
             // com a linha e a coluna onde ela esta sendo usada
-            Token tkAux = getTokenDataFromScopeStack(currentToken.getText());
+            Token tkAux = findTokenOnScopeStack(currentToken.getText());
             PcT.add(new Token(
                 tkAux.getType(),
                 tkAux.getText(),
@@ -626,7 +630,7 @@ public class Parser {
             // adiciona uma cópia de uma variavel ja declarada na pilha TcP
             // com a linha e a coluna onde ela esta sendo usada
 
-            Token tkAux = getTokenDataFromScopeStack(currentToken.getText());
+            Token tkAux = findTokenOnScopeStack(currentToken.getText());
             PcT.add(new Token(
                 tkAux.getType(), 
                 tkAux.getText(),
