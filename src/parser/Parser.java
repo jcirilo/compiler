@@ -428,6 +428,9 @@ public class Parser {
 
             // VERIFICA SE OS VALORES À ESQUERDA DE UMA ATRIBUIÇÃO
             // POSSUEM TIPOS VÁLIDOS
+            //
+            // TABELA DA ESPECIFICAÇÃO 2.C
+            //
             if (checkTypes(INT_NUMBER, INT_NUMBER)) {
                 atualizePcT(INT_NUMBER);
             } else if (checkTypes(REAL_NUMBER, REAL_NUMBER)) {
