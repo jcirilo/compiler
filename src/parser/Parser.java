@@ -523,7 +523,8 @@ public class Parser {
         termo();
 
         if (isCurrentTokenType(IDENTIFIER)) {
-            // adiciona uma cópia de uma variavel ja declarada na pilha TcP
+
+            // empilha uma cópia de uma variavel ja declarada na pilha TcP
             // com a linha e a coluna onde ela esta sendo usada
             Token tkAux = findTokenOnScopeStack(currentToken.getText());
             PcT.add(new Token(
@@ -627,9 +628,9 @@ public class Parser {
 
     private void fator(){
         if(isCurrentTokenType(IDENTIFIER)){
-            // adiciona uma cópia de uma variavel ja declarada na pilha TcP
-            // com a linha e a coluna onde ela esta sendo usada
 
+            // empilha uma cópia de uma variavel ja declarada na pilha TcP
+            // com a linha e a coluna onde ela esta sendo usada
             Token tkAux = findTokenOnScopeStack(currentToken.getText());
             PcT.add(new Token(
                 tkAux.getType(), 
