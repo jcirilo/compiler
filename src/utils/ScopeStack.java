@@ -1,24 +1,42 @@
 package utils;
 import java.util.ArrayList;
 
+import lexical.Token;
+
 // PILHA DE ESCOPO DE IDENTIFICADORES
 
 public class ScopeStack {
-    private ArrayList<String> ids;
+    private ArrayList<Token> tokens;
 
     public ScopeStack() {
-        ids = new ArrayList<String>();
+        tokens = new ArrayList<Token>();
     }
 
-    public boolean push(String id) {
-        return ids.add(id);
+    public boolean push(Token tk) {
+        return tokens.add(tk);
     }
 
-    public String pop() {
-        if (ids == null) {
+    public Token pop() {
+        if (tokens == null) {
             return null;
         }
-        return ids.remove(ids.size()-1);
+        return tokens.remove(tokens.size()-1);
+    }
+
+    public Token getFromTop(int pos) {
+        return tokens.get(tokens.size()-pos);
+    }
+
+    // SERVE PARA MARCAR O TIPO DOS IDENTIFICADORES APÓS
+    // NA PRODUÇÃO TIPO
+    public void assignTypeWhereIsNull (TokenType tt) {
+        for (int i = tokens.size()-1; i > 0; i--) {
+            if (tokens.get(i).getType() == null) {
+                tokens.get(i).setType(tt);
+            } else {
+                break;
+            }
+        }
     }
 
     // Métodod para verificar se já ha o id no escopo
@@ -29,16 +47,16 @@ public class ScopeStack {
     // pilha: [$ a b c $ x y z]
     //                 ^
     //            procura o id até esse simbolo
-    public boolean scopeContains(String id) {
-        if (id == "$") {
+    public boolean scopeContains(String tk) {
+        if (tk == "$") {
             return false;
         }
 
-        for (int i = ids.size()-1; i > 0; i--) {
-            if (ids.get(i).equals("$")) {
+        for (int i = tokens.size()-1; i > 0; i--) {
+            if (tokens.get(i).getText().equals("$")) {
                 break;
             }
-            if (ids.get(i).equals(id)) {
+            if (tokens.get(i).getText().equals(tk)) {
                 return true;
             }
         }
@@ -47,9 +65,16 @@ public class ScopeStack {
     }
 
     // procura o identificador em toda a a pilha
+    // do topo para a base e para ao encontrar
+    // garantindo a prcedência de uso local -> global
     // serve para na parte de ativação de procedimentos
     public boolean contains(String id) {
-        return ids.contains(id);
+        for (int i = tokens.size()-1; i > 0; i--) {
+            if (tokens.get(i).getText().equals(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Limpa todas variáveis declaradas dentro de um escopo
@@ -60,18 +85,22 @@ public class ScopeStack {
     // pilha dps chamar de cleanScope() 1 vez:
     // [$ a b c]
     public void cleanScope () {
-        String popedId = pop(); 
-        while (!popedId.equals("$")) {
+        Token popedId = pop(); 
+        while (!popedId.getText().equals("$")) {
             popedId = pop();
         }
     }
 
+    public int size() {
+        return this.tokens.size();
+    }
+    
     @Override
     public String toString() {
         String data = new String("[");
-        for (String id : ids) {
-            data += id + " ";
+        for (Token id : tokens) {
+            data += " (" + id.getText() + ", " + id.getType() + ")";
         }
-        return (data + "]");
+        return (data + " ]");
     } 
 }
