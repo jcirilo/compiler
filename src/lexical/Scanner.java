@@ -47,7 +47,7 @@ public class Scanner {
 		reservedWords.put("real", TokenType.RESERVED);
 		reservedWords.put("program", TokenType.RESERVED);
 		reservedWords.put("var", TokenType.RESERVED);
-		reservedWords.put("boolean", TokenType.RESERVED);
+		reservedWords.put("boolean", TokenType.BOOLEAN);
 		reservedWords.put("procedure", TokenType.RESERVED);
         reservedWords.put("begin", TokenType.RESERVED);
         reservedWords.put("end", TokenType.RESERVED);
