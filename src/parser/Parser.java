@@ -10,7 +10,7 @@ public class Parser {
     private int pos;
     private Token currentToken;
     private ScopeStack scopeStack;
-    private ArrayList<TokenType> PcT;
+    private ArrayList<Token> PcT;
     private String text; // para debug
     private String type; // para debug 
     private String sIDs; // para debug
@@ -22,7 +22,7 @@ public class Parser {
         this.type = null;
         this.sIDs = null;
         this.scopeStack = new ScopeStack();
-        this.PcT = new ArrayList<TokenType>();
+        this.PcT = new ArrayList<Token>();
     }
 
     // inicia a analize a partir de um buffer de tokens
@@ -90,9 +90,10 @@ public class Parser {
     // erro - faltando algo
     private void errorExpected(String expectedText){
         throw new RuntimeException(
-            "Syntatic Error: missing '" + expectedText + "' at line "
-            + currentToken.getRow() + ", column "
-            + currentToken.getCol() + ". Found '" + currentToken.getText() + "' instead.");
+            "Syntatic Error: invalid token '" + currentToken.getText()
+            + "' at line " + currentToken.getRow()
+            + ", column " + currentToken.getCol()
+            + ". Expected '"  + expectedText + "' instead.");
     }
 
     // erro - expressão mal formatada
@@ -114,11 +115,14 @@ public class Parser {
     }
 
     private void errorType () {
+        Token tkErr = PcT.get(PcT.size()-1);
         throw new RuntimeException (
-            "Semantic Error: invalid type '"
-            + PcT.get(PcT.size()-1) + "' "
-            + "at line "
-            + currentToken.getRow()
+            "Semantic Error: '"
+            + tkErr.getText() +
+            "' has a invalid type of "
+            + tkErr.getType()
+            + " at line " + tkErr.getRow()
+            + ", col " + tkErr.getCol()
         );
     }
 
@@ -146,12 +150,12 @@ public class Parser {
         sIDs = scopeStack.toString();
     }
 
-    private TokenType getType(String id) {
+    private Token getTokenDataFromScopeStack(String id) {
         Token tk;
         for (int i = 1; i != scopeStack.size(); i++) {
             tk = scopeStack.getFromTop(i); 
             if (tk.getText().equals(id)) {
-                return tk.getType();
+                return tk;
             }
         }
         return null;
@@ -303,13 +307,13 @@ public class Parser {
     }*/
     private void comando_composto() {
         if(isCurrentTokenText("begin")){
-            //tryToPush("$", MARK);   // NOVO ESCOPO PILHA SEMÂNTICA
+            tryToPush("$", MARK);   // NOVO ESCOPO PILHA SEMÂNTICA
             match("begin");
             comandos_opcionais();
 
             if(isCurrentTokenText("end")){
+                cleanScope();       // LIMPAR ESCOPO PILHA SEMÂNTICA
                 match("end");
-                //cleanScope();       // LIMPAR ESCOPO PILHA SEMÂNTICA
             }else{
                 errorExpected("end");
             }
@@ -377,6 +381,15 @@ public class Parser {
         if (isCurrentTokenType(IDENTIFIER)) {
             // Variável e Ativacao_de_procedimento
             if (scopeStack.contains(currentToken.getText())) {
+                // adiciona uma cópia de uma variavel ja declarada na pilha TcP
+                // com a linha e a coluna onde ela esta sendo usada
+                Token tkAux = getTokenDataFromScopeStack(currentToken.getText());
+                PcT.add(new Token(
+                    tkAux.getType(),
+                    tkAux.getText(),
+                    currentToken.getRow(),
+                    currentToken.getCol()
+                ));
                 match(IDENTIFIER);
                 comando_opt();
             } else {
@@ -412,6 +425,20 @@ public class Parser {
         if (isCurrentTokenText(":=")) {
             advance();
             expressao();
+
+            // VERIFICA SE OS VALORES À ESQUERDA DE UMA ATRIBUIÇÃO
+            // POSSUEM TIPOS VÁLIDOS
+            if (checkTypes(INT_NUMBER, INT_NUMBER)) {
+                atualizePcT(INT_NUMBER);
+            } else if (checkTypes(REAL_NUMBER, REAL_NUMBER)) {
+                atualizePcT(REAL_NUMBER);
+            } else if (checkTypes(INT_NUMBER, REAL_NUMBER)) {
+                atualizePcT(REAL_NUMBER);
+            } else if (checkTypes(BOOLEAN, BOOLEAN)){
+                atualizePcT(BOOLEAN);
+            } else {
+                errorType();
+            }
         } else if (isCurrentTokenText("(")) {
             advance();
             lista_de_expressoes();
@@ -451,6 +478,15 @@ public class Parser {
         if (isCurrentTokenType(REL_OPERATOR)) {
             advance();
             expressao_simples();
+            if (checkTypes(BOOLEAN, BOOLEAN)
+            ||checkTypes(REAL_NUMBER, REAL_NUMBER)
+            ||checkTypes(INT_NUMBER, INT_NUMBER)
+            ||checkTypes(REAL_NUMBER, INT_NUMBER)
+            ||checkTypes(INT_NUMBER, REAL_NUMBER)) {
+                atualizePcT(BOOLEAN);
+            } else {
+                errorType();
+            }
         }
         // epsilon - não fazer nada
     }
@@ -467,7 +503,7 @@ public class Parser {
         if(isCurrentTokenText("+") || isCurrentTokenText("-")) {
             sinal();
         } 
-        
+
         if(!isCurrentTokenType(IDENTIFIER) && 
         !isCurrentTokenType(INT_NUMBER) && 
         !isCurrentTokenType(REAL_NUMBER) && 
@@ -476,23 +512,53 @@ public class Parser {
         !isCurrentTokenText("not")) {
             errorMalformedExpression();
         }
-        
+
         termo();
+
+        if (isCurrentTokenType(IDENTIFIER)) {
+            // adiciona uma cópia de uma variavel ja declarada na pilha TcP
+            // com a linha e a coluna onde ela esta sendo usada
+            Token tkAux = getTokenDataFromScopeStack(currentToken.getText());
+            PcT.add(new Token(
+                tkAux.getType(),
+                tkAux.getText(),
+                currentToken.getRow(),
+                currentToken.getCol()
+            ));
+        } else if (isCurrentTokenType(INT_NUMBER)
+               || isCurrentTokenType(REAL_NUMBER)
+               || isCurrentTokenType(BOOLEAN)) {
+            // empilha uma cópia do token em PcT 
+            PcT.add(new Token(
+                currentToken.getType(),
+                currentToken.getText(),
+                currentToken.getRow(),
+                currentToken.getCol()
+            ));
+        }
+
         expressao_simples2();
         
     }
 
     private void atualizePcT(TokenType tipoResultante) {
         PcT.remove(PcT.size()-1); // pop
-        PcT.remove(PcT.size()-1); // pop
-        PcT.add(tipoResultante);  // push
+        Token subtopo = PcT.remove(PcT.size()-1); // pop
+
+        // push tipo resultante
+        PcT.add(new Token(
+            tipoResultante, 
+            subtopo.getText(), 
+            subtopo.getRow(), 
+            subtopo.getCol()));
     }
 
+    // Auxiliar pra verificar os tipos do topo e subtopo da pilha PcT
     private boolean checkTypes(TokenType t1, TokenType t2) {
         if (!PcT.isEmpty() && PcT.size() > 1) {
-            TokenType top = PcT.get(PcT.size()-1);
-            TokenType subtop = PcT.get(PcT.size()-2);
-            return (top == t1 && subtop == t2);
+            Token top = PcT.get(PcT.size()-1);
+            Token subtop = PcT.get(PcT.size()-2);
+            return (top.getType() == t1 && subtop.getType() == t2);
         }
         return false;
     }
@@ -554,18 +620,29 @@ public class Parser {
 
     private void fator(){
         if(isCurrentTokenType(IDENTIFIER)){
-            if (getType(currentToken.getText()) == REAL_NUMBER || 
-                getType(currentToken.getText()) == INT_NUMBER ||
-                getType(currentToken.getText()) == BOOLEAN) {
-                    PcT.add(getType(currentToken.getText()));
-            }
+            // adiciona uma cópia de uma variavel ja declarada na pilha TcP
+            // com a linha e a coluna onde ela esta sendo usada
+
+            Token tkAux = getTokenDataFromScopeStack(currentToken.getText());
+            PcT.add(new Token(
+                tkAux.getType(), 
+                tkAux.getText(),
+                currentToken.getRow(),
+                currentToken.getCol()
+                ));
+
             match(IDENTIFIER);
             fator_opt();
         }else if(isCurrentTokenType(INT_NUMBER) ||
                  isCurrentTokenType(REAL_NUMBER) ||
                  isCurrentTokenText("true")){
-                    PcT.add(currentToken.getType());
-                    advance();          
+                    // empilha a cópia do token atual no PcT
+                    PcT.add(
+                        new Token(currentToken.getType(), 
+                        currentToken.getText(), 
+                        currentToken.getRow(), 
+                        currentToken.getCol()));
+                    advance();
         } else if(isCurrentTokenText("(")){
             advance();
             expressao();
